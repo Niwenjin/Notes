@@ -1,6 +1,4 @@
 # shell基础命令  
-## bash基本语法
-> `$ command [-options] [FILE/section/...] {destination}`
 ## powershell常用命令
 > * ping
 > > `$ ping "host"` 验证与主机间的连接
@@ -280,11 +278,27 @@
 > > `$ yes` 输出一串y直到中断
 ## 常用命令
 > * grep
+> > `$ grep [-option] pattern [file]` 查找文件里符合条件的字符串或正则表达式
+> > > `-i` 忽略大小写  
+> `-v` 反向查找不匹配的行  
+> `-n` 显示匹配的行号  
+> `-c` 只打印匹配的行数
 > * gawk
 > > `$ gawk '{print $n}' FILE` 输出文本每行的第n个字段
 > > > `-F` 指定分隔符
 > * find
+> > `$ find [path] [expression]` 在指定目录下查找文件和目录  
+> > > `-name pattern` 按文件名查找，支持通配符*?  
+> `-type f/d/l` 按类型查找文件/目录/符号链接  
+> `-size [+-]size` 按大小查找  
+> `-mtime [+-]time` 按修改时间查找
 > * sed
+> > `$ sed <script> FILE` 利用脚本处理文本文件  
+> `$ sed -e 4a\newLine FILE` 在第4行下新增  
+> `$ sed -e 2,5d FILE` 删除2~5行
+> > > `-e <script>` 用选项中脚本  
+> `-f <scriptfile>` 用脚本文件  
+> `a/c/d/i/p/s` 新增/取代/删除/插入/打印/取代
 > * Rust替代命令
-> > * ripgrep
+> > * rg-grep
 > > * fd-find
