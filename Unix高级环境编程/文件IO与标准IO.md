@@ -46,7 +46,7 @@ struct stat {
     ino_t      st_ino;        //i节点编号
     dev_t      st_dev;        //设备号码
     dev_t      st_rdev;       //特殊设备号码
-    nlink_t    st_nlink;      //文件的链接数
+    nlink_t    st_nlink;      //文件的硬链接数
     uid_t      st_uid;        //文件所有者
     gid_t      st_gid;        //文件所有者对应的组
     off_t      st_size;       //文件长度（单位：字节）
@@ -106,7 +106,6 @@ st_rdev记录字符特殊文件和块特殊文件的设备号
 #### 文件中的空洞
 当设置的偏移量超过文件尾端，并写入数据后，造成文件空洞。  
 空洞使文件长度增加，但是不占用磁盘空间。  
-如果复制该文件，会用0填满空洞。
 #### 文件时间
 更改文件时间  
 `int futimens(int fd, const struct timespec times[2]);`  
@@ -114,7 +113,7 @@ st_rdev记录字符特殊文件和块特殊文件的设备号
 `int utimes(const char *pathname, const struct timeval time[2]);`
 ### 文件系统
 #### 硬链接
-创建硬链接  
+创建硬链接（目录项）  
 `int link(const char *existingpath, const char *newpath);`  
 `int linkat(int efd, const char *existingpath, int nfd, const char *newpath, int flag);`  
 删除目录项  
@@ -124,6 +123,7 @@ st_rdev记录字符特殊文件和块特殊文件的设备号
 `int rename(const char *oldname, const char *newname);`  
 `int rename(int oldfd, const char *oldname, int newfd, const char *newname);`  
 #### 符号链接
+优点：可跨分区建立，可对目录建立  
 创建符号链接  
 `int symlink(const char *actualpath, const char *sympath);`  
 `int symlinkat(const char *actualpath, int fd, const char *sympath);`  
