@@ -133,7 +133,7 @@ st_rdev记录字符特殊文件和块特殊文件的设备号
 ### 目录
 创建目录  
 `int mkdir(const char *pathname, mode_t mode);`  
-`int mkdirat(int fd, const char *pathname, mode_t mode);`
+`int mkdirat(int fd, const char *pathname, mode_t mode);`  
 删除空目录  
 `int rmdir(const char *pathname);`  
 改变当前工作目录  
