@@ -154,3 +154,316 @@ st_rdev记录字符特殊文件和块特殊文件的设备号
 `void seekdir(DIR *dp,long loc);`  
 关闭目录流  
 `int closedir(DIR *dp);`
+## 标准IO
+### 流和FILE对象
+流的定向  
+```
+int fwide(FILE *fp, int mode);
+// mode为正，指定流为宽定向
+// mode为负，指定流为字节定向
+// mode为0，不指定流定向，返回该流定向的值
+```
+标准输入、标准输出和标准错误  
+```
+// 头文件<stdio.h>预定义了3个流
+// 通过文件指针stdin, stdout, stderr加以引用
+```
+打开流
+```
+#include <stdio.h>
+FILE *fopen(const char *restrict pathname, const char *restrict type);
+// 打开路径为pathname的文件
+FILE *freopen(const char *restrict pathname, const char *restrict type, FILE *restrict fp);
+// 在一个指定的流上打开一个文件
+FILE *fdopen(int fd, const char *type);
+// 取已有的描述符，使一个标准IO流与其相结合
+```
+获取文件描述符
+```
+int fileno(FILE *fp);
+```
+### 读和写流
+输入函数
+```
+#include <stdio.h>
+int getc(FILE *fp);
+int fgetc(FILE *fp);   // getc可被实现为宏，fgetc不能
+int getchar(void);     // getchar等于getc(stdin)
+
+char *fgets(char *restrict buf, int n, FILE *restrict fp); // 读入一行到缓冲区
+char *gets(char *buf)  // 弃用
+```
+输入结束
+```
+#include <stdio.h>
+int ferror(FILE *fp);    // 判断出错
+int feof(FILE *fp);      // 判断到达尾端
+void clearerr(FILE *fp); // 清除错误和EOF标志
+```
+输出函数
+```
+#include <stdio.h>
+int putc(int c, FILE *fp);
+int fputc(int c, FILE *fp);
+int putchar(int c);     // 与输入函数相同
+
+int fputs(const char *restrict str, FILE *restrict fp); // 将一个null字节终止的字符串写入到指定的流
+int puts(const char *str); // 将字符串写入到标准输出
+```
+二进制IO
+```
+#include <stdio.h>
+size_t fread(void *restrict ptr, size_t size, size_t nobj, FILE *restrict fp);
+size_t fwrite(const void *restrict ptr, size_t size, size_t nobj, FILE *restrict fp);
+// size为每个数组元素的长度，nobj为读或写的元素个数
+```
+### 缓冲
+缓冲类型
+* 全缓冲：在填满标准IO缓冲区后才进行实际IO操作
+* 行缓冲：遇到换行符时才进行IO操作
+* 不带缓冲：立即进行IO操作
+
+打开或关闭缓冲
+```
+#include <stdio.h>
+
+void setbuf(FILE *restrict fp, char *restrict buf);
+// 打开时，buf指向缓冲区；关闭时，buf设置为NULL
+
+int setvbuf(FILE *restrict fp, char *restrict buf, int mode, size_t size);
+// mode参数设置缓冲类型：
+    _IOFBF     全缓冲
+    _IOLBF     行缓冲
+    _IONBF     不带缓冲
+```
+强制冲洗流
+```
+int fflush(FILE *fp);
+// 该函数使流中未写的数据被传送至内核
+// 若fp设置为NULL，则冲洗所有输出流
+```
+### 定位流
+ftell和fseek
+```
+#include <stdio.h>
+long ftell(FILE *fp);     // 返回当前文件位置
+int fseek(FILE *fp, long offset, int whence);
+void rewind(FILE *fp);    // 将流设置至起始位置 
+```
+ftello和fseeko
+```
+#include <stdio.h>
+off_t ftello(FILE *fp);
+int fseeko(FILE *fp, off_t offset, int whence);
+// 用off_t代替了长整型
+```
+fgetpos和fsetpos
+```
+// 移植到非Unix系统的程序应使用fgetpos和fsetpos
+int fgetpos(FILE *restrict fp, fpos_t *restrict pos);
+int fsetpos(FILE *fp, const fpos_t pos); 
+```
+### 格式化IO
+格式化输出
+```
+#include <stdio.h>
+int printf(const char *restrict format, ...);
+int fprintf(FILE *restrict fp, const char *restrict format, ...);
+int dprintf(int fd, const char *restrict format, ...);
+int sprintf(char *restrict buf, const char *restrict format, ...);
+int snprintf(char *restrict buf, size_t n, const char *restrict format, ...);
+```
+格式化输入
+```
+#include <stdio.h>
+int scanf(const char *restrict format, ...);
+int fscanf(FILE *restrict fp, const char *restrict format, ...);
+int fscanf(const char *restrict buf, const char *restrict format, ...);
+```
+### 临时文件
+创建一个临时文件
+```
+#include <stdio.h>
+char *tmpnam(char *ptr);    // 返回指向唯一路径名的指针
+FILE *tmpfile(void);        // 返回文件指针
+```
+```
+#include <stdlib.h>
+char *mkdtemp(char *template);  // 创建一个临时目录
+int mkstemp(char *template);    // 创建一个临时文件
+```
+### 内存流
+创建内存流
+```
+#include <stdio.h>
+FILE *fmemopen(void *restrict buf, size_t size, const char *restrict type);
+```
+```
+#include <stdio.h>
+FILE *open_memstream(char **bufp, size_t *sizep);
+```
+```
+#include <wchar.h>
+FILE *open_wmemstream(wchar_t **bufp, size_t *sizep);
+```
+## 系统数据文件和信息
+### 口令文件
+口令文件位置  
+`/etc/passwd`  
+口令结构
+```
+struct passwd {
+	char   *pw_name;       /* username */
+	char   *pw_passwd;     /* user password */
+	uid_t   pw_uid;        /* user ID */
+	gid_t   pw_gid;        /* group ID */
+	char   *pw_gecos;      /* real name */
+	char   *pw_dir;        /* home directory */
+	char   *pw_shell;      /* shell program */
+};
+```
+查看口令文件项
+```
+#include <pwd.h>
+// 通过uid或用户名查看对应记录项
+struct passwd *getpwuid(uid_t uid);
+struct passwd *getpwnam(const char *name);
+```
+查看整个口令文件
+```
+#include <pwd.h>
+// 每次调用查看下一条记录项
+struct passwd *getpwent(void);
+void setpwent(void);    // 反绕文件
+void endpwent(void);    // 关闭口令文件
+```
+阴影口令
+```
+// 加密口令存放在阴影口令文件/etc/shadow
+struct spwd {
+    char *sp_namp;       /* 用户登录名 */
+    char *sp_pwdp;       /* 加密口令 */
+    long int sp_lstchg;  /* 上次更改口令以来的时间 */
+    long int sp_min;     /* 进过多少天后可以更改 */
+    long int sp_max;     /* 要求更改的剩余天数 */
+    long int sp_warn;    /* 到期警告的天数 */
+    long int sp_inact;   /* 账户不活动之前尚余天数 */
+    long int sp_expire;  /* 账户到期天数 */
+    unsigned long int sp_flag; /* 保留 */
+};
+```
+访问阴影口令
+```
+#include <shadow.h>
+// 与访问口令函数类似
+struct spwd *getspnam(const char *name);
+struct spwd *getspent(void);
+void setspent(void);
+void endspent(void);
+```
+### 组文件
+group结构
+```
+#include <sys/types.h>
+#include <grp.h>
+struct group
+{
+  char *gr_name;  				/* 组名 */
+  char *gr_passwd;  			/* 密码 */
+  __gid_t gr_gid;  				/* 组ID */
+  char **gr_mem;  				/* 组成员名单 */
+}
+```
+访问组结构
+```
+#include <grp.h>
+struct group *getgrgid(gid_t gid);
+struct group *getgrnam(const char *name);
+
+struct group *getgrent(void);
+void setgrent(void);
+void endgrent(void);
+```
+获取组ID
+```
+#include <unistd.h>
+int getgroups(int getgidsize, gid_t grouplist[]);
+// 将进程所属用户各附属组ID填入grouplist中
+```
+设置组ID
+```
+#include <grp.h>
+int setgroups(int ngroups, const gid_t grouplist[]);
+int initgroups(const char *username, gid_t basegid);
+```
+### 登录记录
+utmp文件记录当前登录系统的各个用户
+```
+struct utmp
+{
+  char ut_line[8];  			/* 设备名 */
+  char ut_name[8];  			/* 用户名 */
+  long ut_time;
+}
+```
+### 系统标识
+返回主机和操作系统有关信息
+```
+#include <sys/utsname.h>
+int uname(struct utsname *name);
+```
+utsname结构
+```
+struct utsname
+{
+    char sysname[];        //当前操作系统名
+    char nodename[];       //网络上的名称
+    char release[];        //当前发布级别
+    char version[];        //当前发布版本
+    char machine[];        //当前硬件体系类型
+}
+```
+### 时间和日期
+获取当前时间
+```
+#include <time.h>
+time_t time(time_t *calptr);
+```
+获取指定时钟的时间
+```
+#include <sys/time.h>
+int clock_gettime(clockid_t clock_id, struct timespec *tsp);
+int clock_getres(clockid_t clock_id, struct timespec *tsp);  // 将timespec结构初始化为clock_id对应的精度
+```
+对特定的时钟设定时间
+```
+#include <sys/time.h>
+int clock_settime(clockid_t clock_id, struct timespec *tsp);
+```
+分解时间格式tm
+```
+struct tm {
+    int tm_sec;       /* 秒 – 取值区间为[0,59] */
+    int tm_min;       /* 分 - 取值区间为[0,59] */
+    int tm_hour;      /* 时 - 取值区间为[0,23] */
+    int tm_mday;      /* 一个月中的日期 */
+    int tm_mon;       /* 月份（0代表一月）  */
+    int tm_year;      /* 年份，实际年份减去1900 */
+    int tm_wday;      /* 星期 – 取值区间为[0,6] */
+    int tm_yday;      /* 从每年的1月1日开始的天数 */
+    int tm_isdst;     /* 夏令时标识符 */
+};
+```
+日历时间和分解时间的转换
+```
+#include <time.h>
+struct tm *gmtime(const time_t *calptr);
+struct tm *localtime(const time_t *calptr);
+time_t mktime(struct tm *tmptr);
+```
+格式化输出时间
+```
+#include <time.h>
+size_t strftime(char *str, size_t maxsize, const char *format, const struct tm *timeptr)
+size_t strftime_l(char *strDest, size_t maxsize, const char *format, const struct tm *timeptr,  locale_t locale);
+```
