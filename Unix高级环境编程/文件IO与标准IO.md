@@ -278,7 +278,7 @@ int snprintf(char *restrict buf, size_t n, const char *restrict format, ...);
 #include <stdio.h>
 int scanf(const char *restrict format, ...);
 int fscanf(FILE *restrict fp, const char *restrict format, ...);
-int fscanf(const char *restrict buf, const char *restrict format, ...);
+int sscanf(const char *restrict buf, const char *restrict format, ...);
 ```
 ### 临时文件
 创建一个临时文件
