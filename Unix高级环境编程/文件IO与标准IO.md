@@ -248,6 +248,11 @@ ftell和fseek
 #include <stdio.h>
 long ftell(FILE *fp);     // 返回当前文件位置
 int fseek(FILE *fp, long offset, int whence);
+/* whence: 
+SEEK_SET： 文件开头
+SEEK_CUR： 当前位置
+SEEK_END： 文件结尾 */
+
 void rewind(FILE *fp);    // 将流设置至起始位置 
 ```
 ftello和fseeko
@@ -278,14 +283,14 @@ int snprintf(char *restrict buf, size_t n, const char *restrict format, ...);
 #include <stdio.h>
 int scanf(const char *restrict format, ...);
 int fscanf(FILE *restrict fp, const char *restrict format, ...);
-int fscanf(const char *restrict buf, const char *restrict format, ...);
+int sscanf(const char *restrict buf, const char *restrict format, ...);
 ```
 ### 临时文件
 创建一个临时文件
 ```
 #include <stdio.h>
 char *tmpnam(char *ptr);    // 返回指向唯一路径名的指针
-FILE *tmpfile(void);        // 返回文件指针
+FILE *tmpfile(void);        // 返回匿名文件指针
 ```
 ```
 #include <stdlib.h>
