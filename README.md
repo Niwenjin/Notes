@@ -29,5 +29,6 @@
 > * 第3章 套接字编程简介
 > * 第4章 基本TCP套接字编程
 > * 第5章 TCP客户/服务器程序示例
+> * 第6章 I/O复用：select和poll函数
 ## 论文阅读
 > * The Google File System
