@@ -32,5 +32,6 @@
 > * 第6章 I/O复用：select和poll函数
 > * 第7章 套接字选项
 > * 第11章 名字与地址转换
+> * 第16章 非阻塞式I/O
 ## 论文阅读
 > * The Google File System
