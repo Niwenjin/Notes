@@ -33,5 +33,10 @@
 > * 第7章 套接字选项
 > * 第11章 名字与地址转换
 > * 第16章 非阻塞式I/O
+> * 第26章 线程
 ## 论文阅读
 > * The Google File System
+> * Ceph
+>   * Ceph: A Scalable, High-Performance Distributed File System  
+>   * CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data
+>   * RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters
