@@ -1,60 +1,26 @@
-# 学习笔记
+# Notes
 
-## shell基础命令
+## 学习笔记
 
-* bash基本语法
-* powershell常用命令
-* coreutils命令
-* 常用命令
+[shell基础命令](shell/shell.md)
 
-## C++ Primer
+[B+树](BPlusTree/b+tree.md)
 
-* 第2章 变量和基本类型
-* 第3章 字符串、向量和数组
-* 第4章 表达式
-* 第5章 语句
-* 第6章 函数
-* 第7章 类
-* 第8章 IO库
-* 第11章 关联容器
-* 第12章 动态内存
-* 第14章 重载运算与类型转换
-* 第15章 面向对象程序设计
-* 第16章 模板与泛型编程
+## 读书笔记
 
-## B+树
+[C++ Primer](C++Primer/C++Primer.md)
 
-* B+树结构
-* B+树实现
-* B+树测试用例
+[Unix高级环境编程](APUE/apue.md)
 
-## Unix高级环境编程
+[Unix网络编程](unp/unp.md)
 
-* 第3章 文件IO
-* 第4章 文件和目录
-* 第5章 标准IO库
-* 第6章 系统数据文件和信息
-* 第7章 进程环境
-* 第8章 进程控制
-
-## Unix网络编程
-
-* 第1章 简介和TCP/IP
-* 第3章 套接字编程简介
-* 第4章 基本TCP套接字编程
-* 第5章 TCP客户/服务器程序示例
-* 第6章 I/O复用：select和poll函数
-* 第7章 套接字选项
-* 第11章 名字与地址转换
-* 第16章 非阻塞式I/O
-
-## Linux多线程服务端编程：使用muduo网络库
+[Linux多线程服务端编程：使用muduo网络库](muduo/muduo.md)
 
 ## 论文阅读
 
-* The Google File System
+* [The Google File System](paper/The%20Google%20File%20System/The%20Google%20File%20System.md)
 * Ceph
-  * Ceph: A Scalable, High-Performance Distributed File System  
-  * CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data
-  * RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters
-* The Status of the P Versus NP Problem
+  * [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)  
+  * [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
+  * [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
+* [The Status of the P Versus NP Problem](paper/The%20Status%20of%20the%20P%20Versus%20NP%20Problem/The%20Status%20of%20the%20P%20Versus%20NP%20Problem.md)
