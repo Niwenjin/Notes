@@ -2,7 +2,7 @@
 
 ## 学习笔记
 
-[shell基础命令](shell/shell.md)
+[Linux C++开发](LinuxC++/linuxc++.md)
 
 [B+树](BPlusTree/b+tree.md)
 
