@@ -9,6 +9,7 @@
 [第4章 C++多线程系统编程精要](#第4章-c多线程系统编程精要)  
 [第5章 高效的多线程日志](#第5章-高效的多线程日志)  
 **第2部分 muduo网络库**  
+[第8章 muduo网络库设计与实现](#第8章-muduo网络库设计与实现)  
 **第3部分 工程实践经验谈**  
 **第4部分 附录**
 
@@ -197,3 +198,25 @@ C++可能出现的内存问题大致有几个方面：
 6. 打印源文件名和行号。
 
 在多线程服务端程序中，**异步日志**是必须的。方案是用一个背景线程负责收集日志消息，并写入日志文件。其他线程只管往这个“日志线程”发送日志消息。
+
+## 第二部分 muduo网络库
+
+### 第8章 muduo网络库设计与实现
+
+#### Reactor模式的现代C++实现
+
+事件分发机制是Reactor的核心机制，即将IO复用拿到的IO事件分发给各个fd的事件处理函数。
+
+![reactor](img/EventLoop.jpg)
+
+![Timer](img/onTimer.jpg)
+
+#### 基于Reactor的的单线程非阻塞并发的TCP网络编程
+
+![TcpConn](img/TcpConnect.jpg)
+
+![TcpClose](img/TcpClose.jpg)
+
+![TcpStat](img/TcpStat.jpg)
+
+#### one loop per thread的实现
