@@ -6,6 +6,10 @@
 
 [B+树](BPlusTree/b+tree.md)
 
+[设计模式](DesignPattern/pattern.md)
+
+[LeetCode](LeetCode/leetcode.md)
+
 ## 读书笔记
 
 [C++ Primer](C++Primer/C++Primer.md)
