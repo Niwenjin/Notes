@@ -9,6 +9,7 @@
 [第4章 C++多线程系统编程精要](#第4章-c多线程系统编程精要)  
 [第5章 高效的多线程日志](#第5章-高效的多线程日志)  
 **第2部分 muduo网络库**  
+[第6章 muduo网络库简介](#第6章-muduo网络库简介)  
 [第8章 muduo网络库设计与实现](#第8章-muduo网络库设计与实现)  
 **第3部分 工程实践经验谈**  
 **第4部分 附录**
@@ -200,6 +201,31 @@ C++可能出现的内存问题大致有几个方面：
 在多线程服务端程序中，**异步日志**是必须的。方案是用一个背景线程负责收集日志消息，并写入日志文件。其他线程只管往这个“日志线程”发送日志消息。
 
 ## 第二部分 muduo网络库
+
+### 第6章 muduo网络库简介
+
+muduo的简化类图如下，Buffer是TcpConnection的成员。
+
+![class](img/class.jpg)
+
+* Channel 是 selectable IO channel，负责注册与响应 IO 事件，注意它不拥有 file descriptor。它是 Acceptor、Connector、EventLoop、TimerQueue、TcpConnection 的成员，生命期由后者控制。
+* Socket 是一个 RAII handle，封装一个 file descriptor，并在析构时关闭fd。它是 Acceptor、TcpConnection的成员，生命期由后者控制。 EventLoop，TimerQueue 也拥有 fd，但是不封装为 Socket class。
+* SocketsOps 封装各种 Sockets 系统调用。
+* Poller 是 PollPoller 和 EpollPoller 的基类，采用 “水平触发” 的语义。它是 EventLoop 的成员，生命期由后者控制。
+* PollPoller 和 EpollPoller 封装 poll(2) 和 epoll(4) 两种 IO multiplexing 后端。
+* Connector 用于发起 TCP 连接，它是 TcpClient 的成员，生命期由后者控制。
+* Acceptor 用于接受 TCP 连接，它是 TcpServer 的成员，生命期由后者控制。
+* TimerQueue 用 timerfd 实现定时，这有别于传统的设置 poll/epoll_wait 的等待时长的办法。TimerQueue 使用 std::map 来管理 Timer，常用操作的复杂度是 O(log N)，N 为定时器数目。它是 EventLoop 的成员，生命期由后者控制。
+* EventLoopThreadPool 用于创建 IO 线程池，用于把 TcpConnection 分派到某个 EventLoop 线程上。它是 TcpServer 的成员，生命期由后者控制。
+
+#### muduo网络库使用教程
+
+TCP网络编程最本质的是处理三个半事件：
+
+1. 连接的建立，包括服务端accept和客户端成功发起connect连接。TCP连接一旦建立，客户端和服务端是平等的，可以各自收发数据。
+2. 连接的断开，包括主动断开（close、shutdown）和被动断开（read返回0）。
+3. 消息到达，文件描述符可读。这是最为重要的一个事件，对它的处理方式决定了网络编程的风格（阻塞还是非阻塞，如何处理分包，应用层的缓冲如何设计，等等）。
+4. 消息发送完毕，这算半个。对于低流量的事件，可以不必关心这个事件。
 
 ### 第8章 muduo网络库设计与实现
 
