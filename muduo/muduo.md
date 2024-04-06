@@ -235,14 +235,52 @@ TCP网络编程最本质的是处理三个半事件：
 
 ![reactor](img/EventLoop.jpg)
 
+##### EventLoop类
+
+EventLoop类负责循环去持续监听、持续获取监听结果、持续处理监听结果对应的事件。
+
+##### Poller类
+
+Poller类是 IO multiplexing 的封装，负责监听文件描述符事件是否触发以及返回发生事件的文件描述符以及具体事件。
+
+##### Channel类
+
+在TCP网络编程中，想要IO多路复用监听某个文件描述符，就要把这个fd和该fd感兴趣的事件注册到IO多路复用模块（poll/epoll）上。当事件监听器监听到该fd发生了某个事件。事件监听器返回“发生事件的fd集合”以及“每个fd都发生了什么事件”。
+
+Channel类则封装了一个 fd 和这个 fd “感兴趣事件”以及事件监听器监听到“该 fd 实际发生的事件”。同时Channel类还提供了设置该 fd 的感兴趣事件，以及将该 fd 及其感兴趣事件注册到事件监听器或从事件监听器上移除，以及保存了该 fd 的每种事件对应的处理函数。
+
 ![Timer](img/onTimer.jpg)
+
+##### TimerQueue类
+
+timerQueue 定时器选择线性表组织目前尚未到期的 Timer ，能快速根据当前时间找到已经到期的 Timer ，也能高效地添加和删除 Timer。
 
 #### 基于Reactor的的单线程非阻塞并发的TCP网络编程
 
 ![TcpConn](img/TcpConnect.jpg)
 
+##### Acceptor类
+
+Acceptor类用于 accept 新 TCP 连接，并通过回调通知使用者。
+
+##### TcpServer类
+
+TcpServer会为新连接创建对应的 TcpConnection 对象，把它加入 ConnectionMap，设置好callback。
+
+##### TcpConnection类
+
+TcpConnection类是 muduo 里唯一默认使用 shared_ptr 管理的 class，原因在于其模糊的生命期（见第4章）。TcpConnection 表示的是“一次TCP连接”，它是不可再生的。
+
 ![TcpClose](img/TcpClose.jpg)
 
 ![TcpStat](img/TcpStat.jpg)
 
+##### Buffer类
+
+TcpConnection 使用 Buffer 作为输入和输出缓冲（见第7章）。
+
 #### one loop per thread的实现
+
+用 one loop per thread 实现多线程 TcpServer的关键步骤是在新建 TcpConnection 时从 event loop pool 中挑选一个 loop 给 TcpConnection 用。也就是说多线程 TcpServer 自己的 EventLoop 只用来接受新连接，而新连接会用其他的 EventLoop 来执行 IO。
+
+TcpServer 每次新建一个 TcpConnection 都会调用 getNextLoop() 来取得 EventLoop（如果是单线程服务，每次返回的都是 baseloop_，即 TcpServer 自己的 loop）。
