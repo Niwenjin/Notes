@@ -10,6 +10,7 @@
 [第5章 高效的多线程日志](#第5章-高效的多线程日志)  
 **第2部分 muduo网络库**  
 [第6章 muduo网络库简介](#第6章-muduo网络库简介)  
+[第7章 muoduo编程示例](#第7章-muoduo编程示例)  
 [第8章 muduo网络库设计与实现](#第8章-muduo网络库设计与实现)  
 **第3部分 工程实践经验谈**  
 **第4部分 附录**
@@ -218,7 +219,21 @@ muduo的简化类图如下，Buffer是TcpConnection的成员。
 * TimerQueue 用 timerfd 实现定时，这有别于传统的设置 poll/epoll_wait 的等待时长的办法。TimerQueue 使用 std::map 来管理 Timer，常用操作的复杂度是 O(log N)，N 为定时器数目。它是 EventLoop 的成员，生命期由后者控制。
 * EventLoopThreadPool 用于创建 IO 线程池，用于把 TcpConnection 分派到某个 EventLoop 线程上。它是 TcpServer 的成员，生命期由后者控制。
 
-#### muduo网络库使用教程
+#### muduo网络库多线程模型
+
+##### one loop per thread模型
+
+有一个 main Reactor 负责 accept 连接，然后把连接挂在某个 sub Reactor 中，这样该连接的所有操作都在那个 sub Reactor 中完成。与线程池相比，减少了进出 thread pool 的两次上下文切换，小规模计算可以在当前 IO 线程完成并发会结果，从而降低相应的延迟。
+
+![reactor](img/reactor.jpg)
+
+##### thread pool模型
+
+如果程序的IO带宽较小，计算量较大，而且对延迟不敏感，那么可以把计算放到 thread pool 中。
+
+![threadpool](img/threadpool.jpg)
+
+### 第7章 muoduo编程示例
 
 TCP网络编程最本质的是处理三个半事件：
 
@@ -226,6 +241,40 @@ TCP网络编程最本质的是处理三个半事件：
 2. 连接的断开，包括主动断开（close、shutdown）和被动断开（read返回0）。
 3. 消息到达，文件描述符可读。这是最为重要的一个事件，对它的处理方式决定了网络编程的风格（阻塞还是非阻塞，如何处理分包，应用层的缓冲如何设计，等等）。
 4. 消息发送完毕，这算半个。对于低流量的事件，可以不必关心这个事件。
+
+使用muduo只需要注册几个回调函数去处理三个半事件就行了:
+
+“连接已建立”事件
+
+```cpp
+void onConnection(const TcpConnectionPtr& conn){
+    // 业务逻辑
+}
+```
+
+“连接已断开”事件
+
+```cpp
+void onClose(const TcpConnectionPtr& conn){
+    // 业务逻辑
+}
+```
+
+“消息/数据到达”事件
+
+```cpp
+void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time){
+    // 业务逻辑
+}
+```
+
+“消息/数据发送完毕”事件
+
+```cpp
+void onWriteComplete(const TcpConnectionPtr& conn){
+    // 业务逻辑
+}
+```
 
 ### 第8章 muduo网络库设计与实现
 
