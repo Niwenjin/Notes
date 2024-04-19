@@ -22,6 +22,8 @@
 
 [Linux多线程服务端编程：使用muduo网络库](muduo/muduo.md)
 
+[SQL必知必会](SQL/sql.md)
+
 ## 论文阅读
 
 [The Google File System](paper/GFS/gfs.md)
