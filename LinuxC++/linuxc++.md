@@ -6,7 +6,8 @@
 [git常用命令](#git)  
 [GCC](#gcc)  
 [GDB](#gdb)  
-[CMake](#cmake)
+[CMake](#cmake)  
+[gtest](#gtest)
 
 ## shell命令
 
@@ -476,3 +477,162 @@ git config --global user.email ni_wenjin@qq.com
 `CMAKE_C_FLAGS`gcc编译选项  
 `CMAKE_CXX_FLAGS`g++编译选项  
 `CMAKE_BUILD_TYPE`编译类型
+
+## gtest
+
+### 概念
+
+#### Test Suite
+
+TestSuiteName 用来汇总 test case，相关的 test case 应该是相同的 TestSuiteName。一个文件里只能有一个 TestSuiteName，建议命名为这个文件测试的类名。
+
+TestCaseName 是测试用例的名称。建议有意义，比如“被测试的函数名称”，或者被测试的函数名的不同输入的情况。TestSuiteName_TestCaseName 的组合应该是唯一的。
+
+*注意：GTest 生成的类名是带下划线的，所以上面这些名字里不建议有下划线。*
+
+```cpp
+// 命名测试集和测试案例
+TEST(TestSuiteName, TestCaseName) {
+    // 单测代码
+    EXPECT_EQ(func(0), 0);
+}
+```
+
+#### Test Case
+
+一个 TEST(Foo, Bar){...} 就是一个 Test Case。考虑到构造输入有成本，通常一个 TEST(Foo, Bar) 里会反复修改输入，构造多个 case，测试不同的执行流程。这里建议用大括号分隔不同的 case，整体更条理。另一个好处在于：每个变量的生命周期仅限于大括号内。这样就可以反复使用相同的变量名，而不用给变量名编号。
+
+```cpp
+TEST(Foo, bar) {
+    // case 1: enable = true
+    {
+        Context ctx;
+        params.enable_refresh = true;
+        ASSERT_EQ(ctx->is_enable_fresh(), true);
+    }
+    
+    // case 2: enable = false
+    {
+        Context ctx;
+        params.enable_refresh = false;
+        ASSERT_EQ(ctx->is_enable_fresh(), false);
+    }
+}
+```
+
+如果待测函数十分复杂，建议拆分多个 TEST(Foo, Bar){...}，避免 Test Case 代码膨胀。
+
+```cpp
+// 待测函数
+int foo(TarAddr ta) {
+    if (!ta)
+        return -1;
+    switch(ta.did) {
+        case 0x193b:
+            ...
+        case 0x1204:
+            ...
+    }
+}
+
+TEST(Foo, IsNil) {
+    ...
+}
+
+TEST(Foo, 0x193b) {
+    ...
+}
+
+TEST(Foo, 0x1204) {
+    ...
+}
+```
+
+### 断言
+
+GTest 使用一系列断言的宏来检查返回值是否符合预期、是否抛出预期的异常等。主要分为两类：ASSERT 和 EXPECT。区别在于 ASSERT 不通过的时候会认为是一个 fatal 的错误，退出当前函数（只是函数）。而 EXPECT 失败的话会继续运行当前函数，所以对于函数内几个失败可以同时报告出来。
+
+通常用 EXPECT 级别的断言就好，除非你认为当前检查点失败后函数的后续检查没有意义:
+
+* 如果某个判断不通过时，会影响后续步骤，要使用 ASSERT。常见的是空指针，或者数组访问越界。
+* 其他情况，可以使用 EXPECT，尽可能多测试几个用例。
+
+#### 基础的断言
+
+| Fatal assertion | Nonfatal assertion | Verifies |
+| ---- | ---- | ---- |
+| `ASSERT_TRUE(_condition_);` | `EXPECT_TRUE(_condition_);` | condition is true |
+| `ASSERT_FALSE(_condition_);` | `EXPECT_FALSE(_condition_);` | condition is false |
+
+#### 数值比较
+
+| Fatal assertion | Nonfatal assertion | Verifies |
+| ---- | ---- | ---- |
+| `ASSERT_EQ(_val1_, _val2_);` | `EXPECT_EQ(_val1_, _val2_);` | val1 == val2 |
+| `ASSERT_NE(_val1_, _val2_);` | `EXPECT_NE(_val1_, _val2_);` | val1 != val2 |
+| `ASSERT_LT(_val1_, _val2_);` | `EXPECT_LT(_val1_, _val2_);` | val1 < val2 |
+| `ASSERT_LE(_val1_, _val2_);` | `EXPECT_LE(_val1_, _val2_);` | val1 <= val2 |
+| `ASSERT_GT(_val1_, _val2_);` | `EXPECT_GT(_val1_, _val2_);` | val1 > val2 |
+| `ASSERT_GE(_val1_, _val2_);` | `EXPECT_GE(_val1_, _val2_);` | val1 >= val2 |
+
+#### 浮点数比较
+
+| Fatal assertion | Nonfatal assertion | Verifies |
+| ---- | ---- | ---- |
+| `ASSERT_FLOAT_EQ(_val1_, _val2_);` | `EXPECT_FLOAT_EQ(_val1_, _val2_);` | val1 == val2 (within 4 ULPs) |
+| `ASSERT_DOUBLE_EQ(_val1_, _val2_);` | `EXPECT_DOUBLE_EQ(_val1_, _val2_);` | val1 == val2 (within 4 ULPs) |
+| `ASSERT_NEAR(_val1_, _val2_, _abs_error_);` | `EXPECT_NEAR(_val1_, _val2_, _abs_error_);` | 判断两个数字的绝对值相差是否小于等于 abs_val |
+
+#### 字符串比较
+
+| Fatal assertion | Nonfatal assertion | Verifies |
+| ---- | ---- | ---- |
+| `ASSERT_STREQ(_str1_, _str2_);` | `EXPECT_STREQ(_str1_, _str_2);` | the two C strings have the same content |
+| `ASSERT_STRNE(_str1_, _str2_);` | `EXPECT_STRNE(_str1_, _str2_);` | the two C strings have different content |
+| `ASSERT_STRCASEEQ(_str1_, _str2_);` | `EXPECT_STRCASEEQ(_str1_, _str2_);` | the two C strings have the same content, ignoring case |
+| `ASSERT_STRCASENE(_str1_, _str2_);` | `EXPECT_STRCASENE(_str1_, _str2_);` | the two C strings have different content, ignoring case |
+
+### 示例
+
+待测试的目标类：
+
+```cpp
+// MyClass.h
+class MyClass {
+public:
+    int Add(int a, int b) {
+        return a + b;
+    }
+
+    int Subtract(int a, int b) {
+        return a - b;
+    }
+};
+```
+
+为 MyClass 创建一个测试文件，例如MyClassTest.cpp:
+
+```cpp
+// MyClassTest.cpp
+#include "MyClass.h"
+#include <gtest/gtest.h>
+
+TEST(MyClassTest, AddTest) {
+    MyClass my_class;
+    EXPECT_EQ(my_class.Add(1, 2), 3);
+    EXPECT_EQ(my_class.Add(1, 1), 3);
+}
+
+TEST(MyClassTest, SubtractTest) {
+    MyClass my_class;
+    EXPECT_EQ(my_class.Subtract(1, 2), -1);
+    EXPECT_EQ(my_class.Subtract(1, 1), 3);
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
+```
+
+编译运行：`g++ -std=c++11 -pthread MyClassTest.cpp -lgtest -o MyClassTest`
