@@ -24,6 +24,8 @@
 
 [SQL必知必会](SQL/sql.md)
 
+[Effective C++](Effective/effectivec++.md)
+
 ## 论文阅读
 
 [The Google File System](paper/GFS/gfs.md)
