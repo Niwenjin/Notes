@@ -26,6 +26,8 @@
 
 [Effective C++](Effective/effectivec++.md)
 
+[Effective STL](Effective/stl.md)
+
 ## 论文阅读
 
 [The Google File System](paper/GFS/gfs.md)
