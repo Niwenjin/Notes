@@ -7,7 +7,8 @@
 [GCC](#gcc)  
 [GDB](#gdb)  
 [CMake](#cmake)  
-[gtest](#gtest)
+[gtest](#gtest)  
+[wsl](#wsl)
 
 ## shell命令
 
@@ -636,3 +637,28 @@ int main(int argc, char **argv) {
 ```
 
 编译运行：`g++ -std=c++11 -pthread MyClassTest.cpp -lgtest -o MyClassTest`
+
+## WSL
+
+### WSL的安装和迁移
+
+```powershell
+# 查看可用的发行版
+wsl --list --online
+
+# 安装
+wsl.exe --install <Distro>
+
+# 导出
+wsl --export Ubuntu D:\Linux\Ubuntu\Ubuntu.tar
+
+# 注销
+wsl --unregister Ubuntu
+
+# 导入
+wsl --import Ubuntu D:\Linux\Ubuntu\ D:\Linux\Ubuntu\Ubuntu.tar --version 2
+
+# 修改默认用户
+# 如 Ubuntu-22.04 的可执行文件名为 Ubuntu2204.exe
+ubuntu.exe config --default-user niwenjin
+```
