@@ -662,3 +662,9 @@ wsl --import Ubuntu D:\Linux\Ubuntu\ D:\Linux\Ubuntu\Ubuntu.tar --version 2
 # 如 Ubuntu-22.04 的可执行文件名为 Ubuntu2204.exe
 ubuntu.exe config --default-user niwenjin
 ```
+
+### 设置免sudo密码
+
+`sudo visudo`打开sudo文件
+
+在底下添加一行`niwenjin ALL=(ALL) NOPASSWD:ALL`
