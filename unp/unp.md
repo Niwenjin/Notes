@@ -1,17 +1,17 @@
-# Unix网络编程
+# Unix 网络编程
 
 ## 目录
 
-[第1章 简介和TCP/IP](#第1章-简介和tcpip)  
-[第3章 套接字编程简介](#第3章-套接字编程简介)  
-[第4章 基本TCP套接字编程](#第4章-基本tcp套接字编程)  
-[第5章 TCP客户/服务器程序示例](#第5章-tcp客户服务器程序示例)  
-[第6章 I/O复用：select和poll函数](#第6章-io复用select和poll函数)  
-[第7章 套接字选项](#第7章-套接字选项)  
-[第11章 名字与地址转换](#第11章-名字与地址转换)  
-[第16章 非阻塞式I/O](#第16章-非阻塞式io)
+[第 1 章 简介和 TCP/IP](#第1章-简介和tcpip)  
+[第 3 章 套接字编程简介](#第3章-套接字编程简介)  
+[第 4 章 基本 TCP 套接字编程](#第4章-基本tcp套接字编程)  
+[第 5 章 TCP 客户/服务器程序示例](#第5章-tcp客户服务器程序示例)  
+[第 6 章 I/O 复用：select 和 poll 函数](#第6章-io复用select和poll函数)  
+[第 7 章 套接字选项](#第7章-套接字选项)  
+[第 11 章 名字与地址转换](#第11章-名字与地址转换)  
+[第 16 章 非阻塞式 I/O](#第16章-非阻塞式io)
 
-## 第1章 简介和TCP/IP
+## 第 1 章 简介和 TCP/IP
 
 ### 网络拓扑
 
@@ -26,76 +26,76 @@ ping -b 206.168.112.127  // 找到本地网络中众多主机的IP地址
 
 #### 三次握手
 
-建立一个TCP连接时会发生下述情景：
+建立一个 TCP 连接时会发生下述情景：
 ![tcp_connect](img/tcp_connect.png)
 
-1. 服务器必须准备好接收外来的连接，通常通过调用socket、bind和listen函数来完成，称之为被动打开(passive open)。
-2. 客户通过调用connect发起主动打开(active open)，这导致客户发送一个SYN（同步）分节，它告诉服务器将在连接中发送数据的初始序列号。
-3. 服务器必须确认（ACK）客户的SYN，同时自己也发送一个SYN分节，它含有服务器将在同一连接中发送的数据的初始序列号。
-4. 客户确认服务器的SYN。
+1. 服务器必须准备好接收外来的连接，通常通过调用 socket、bind 和 listen 函数来完成，称之为被动打开(passive open)。
+2. 客户通过调用 connect 发起主动打开(active open)，这导致客户发送一个 SYN（同步）分节，它告诉服务器将在连接中发送数据的初始序列号。
+3. 服务器必须确认（ACK）客户的 SYN，同时自己也发送一个 SYN 分节，它含有服务器将在同一连接中发送的数据的初始序列号。
+4. 客户确认服务器的 SYN。
 
-#### TCP选项
+#### TCP 选项
 
-每一个SYN可以含有多个TCP选项：
+每一个 SYN 可以含有多个 TCP 选项：
 
-* MSS选项。最大分节大小，即它在本连接的每个TCP分节中接受的最大数据量。
-* 窗口规模选项。
-* 时间戳选项。
+- MSS 选项。最大分节大小，即它在本连接的每个 TCP 分节中接受的最大数据量。
+- 窗口规模选项。
+- 时间戳选项。
 
 #### 四次挥手
 
-TCP建立一个连接需要3个分节，终止一个连接则需4个分节：
+TCP 建立一个连接需要 3 个分节，终止一个连接则需 4 个分节：
 ![tcp_close](img/tcp_close.png)
 
-1. 某个应用进程调用close，称该端执行主动关闭(active close)，该端的TCP发送一个FIN分节，表示数据发送完毕。
-2. 接收到这个FIN的对端执行被动关闭(passive close)，它发送一个确认(ACK)给发送端应用进程。FIN的接受也作为一个文件结束符传递给接收端应用进程。
-3. 一段时间后，接收到这个文件结束符的应用进程将调用close关闭它的套接字，这导致它的TCP也发送一个FIN。
-4. 接受这个FIN的原发送端确认这个FIN。
+1. 某个应用进程调用 close，称该端执行主动关闭(active close)，该端的 TCP 发送一个 FIN 分节，表示数据发送完毕。
+2. 接收到这个 FIN 的对端执行被动关闭(passive close)，它发送一个确认(ACK)给发送端应用进程。FIN 的接受也作为一个文件结束符传递给接收端应用进程。
+3. 一段时间后，接收到这个文件结束符的应用进程将调用 close 关闭它的套接字，这导致它的 TCP 也发送一个 FIN。
+4. 接受这个 FIN 的原发送端确认这个 FIN。
 
-#### TCP状态转换图
+#### TCP 状态转换图
 
 ![tcp_stat](img/tcp_stat.png)
 
-##### TIME_WAIT状态
+##### TIME_WAIT 状态
 
-该状态的持续时间是最长生命分节期（MSL）的两倍，称之为2MSL。理由：
+该状态的持续时间是最长生命分节期（MSL）的两倍，称之为 2MSL。理由：
 
-1. 可靠地实现TCP全双工连接的终止。
+1. 可靠地实现 TCP 全双工连接的终止。
 2. 允许老的重复分节在网络中消逝。
 
 #### 端口号
 
-端口号被划分成3段：
+端口号被划分成 3 段：
 
-1. 众所周知的端口为0~1023。这些端口号由IANA分配和控制。
-2. 已登记的端口为1024~49151。
-3. 49152~65535是动态的或私有的端口。它们就是我们所称的临时端口。
+1. 众所周知的端口为 0~1023。这些端口号由 IANA 分配和控制。
+2. 已登记的端口为 1024~49151。
+3. 49152~65535 是动态的或私有的端口。它们就是我们所称的临时端口。
 
 #### 套接字对
 
-一个TCP连接的套接字对是一个定义该连接的两个端点的四元组：本地IP地址、本地TCP端口号、外地IP地址、外地TCP端口号。标识每个端点的两个值（IP地址和端口号）通常称为一个套接字。
+一个 TCP 连接的套接字对是一个定义该连接的两个端点的四元组：本地 IP 地址、本地 TCP 端口号、外地 IP 地址、外地 TCP 端口号。标识每个端点的两个值（IP 地址和端口号）通常称为一个套接字。
 
 #### 缓冲区大小及限制
 
-数据链路的硬件规定了最大传输单元MTU，两个主机间路径中最小的MTU称为路径MTU(path MTU)。  
-IPv4数据报的最大大小是65535字节，包括IPv4首部。  
-IPv6数据报的最大大小是65575字节，包括40字节的IPv6首部。  
-当一个IP数据报的大小超过相应链路的MTU，将执行分片。  
-最小重组缓冲区大小是IPv4和IPv6的任何实现都必须保证支持的最小数据报大小。
+数据链路的硬件规定了最大传输单元 MTU，两个主机间路径中最小的 MTU 称为路径 MTU(path MTU)。  
+IPv4 数据报的最大大小是 65535 字节，包括 IPv4 首部。  
+IPv6 数据报的最大大小是 65575 字节，包括 40 字节的 IPv6 首部。  
+当一个 IP 数据报的大小超过相应链路的 MTU，将执行分片。  
+最小重组缓冲区大小是 IPv4 和 IPv6 的任何实现都必须保证支持的最小数据报大小。
 
-## 第3章 套接字编程简介
+## 第 3 章 套接字编程简介
 
 ### 套接字地址结构
 
 ![sockaddr](img/socket_addr.png)
-IPv4套接字地址结构
+IPv4 套接字地址结构
 
 ```cpp
-struct in_addr 
+struct in_addr
 {
     in_addr_t s_addr;   /* 32-bit IPv4 address */
 };  /* network byet orered */
- 
+
 stuct sockaddr_in
 {
     uint8_t  sin_len;     /* length of structure */
@@ -120,7 +120,7 @@ struct sockaddr {
 // 唯一用途是对指向特定于协议的套接字地址结构的指针执行类型强制转换。
 ```
 
-IPv6套接字地址结构
+IPv6 套接字地址结构
 
 ```cpp
 struct in6_addr{
@@ -179,7 +179,7 @@ struct sockaddr_storage
 
 ### 字节操纵函数
 
-BSD函数
+BSD 函数
 
 ```cpp
 #include <strings.h>
@@ -189,7 +189,7 @@ void bcopy(const void *src, void *dest, size_t nbytes);
 int bcmp(const void *ptr1, const void *ptr2, size_t nbytes);
 ```
 
-ANSI C函数
+ANSI C 函数
 
 ```cpp
 #include <string.h>
@@ -363,15 +363,15 @@ Readline(int fd, void *ptr, size_t maxlen)
 }
 ```
 
-## 第4章 基本TCP套接字编程
+## 第 4 章 基本 TCP 套接字编程
 
 ### 基本套接字函数
 
 ![func](img/sockfunc.png)
 
-#### socket函数
+#### socket 函数
 
-socket函数指定通信协议类型
+socket 函数指定通信协议类型
 
 ```cpp
 #include <sys/socket.h>
@@ -384,9 +384,9 @@ int socket(int family, int type, int protocol);
 ![type](img/type.png)
 ![combine](img/combine.png)
 
-#### connect函数
+#### connect 函数
 
-TCP客户用connect函数建立与服务器的连接
+TCP 客户用 connect 函数建立与服务器的连接
 
 ```cpp
 #include <sys/socket.h>
@@ -395,9 +395,9 @@ int connect(int sockfd, const struct sockaddr *servaddr, socklen_t addrlen);
 // 若成功返回0，否则返回-1
 ```
 
-#### bind函数
+#### bind 函数
 
-bind函数把一个本地协议地址赋予一个套接字
+bind 函数把一个本地协议地址赋予一个套接字
 
 ```cpp
 #include <sys/socket.h>
@@ -408,9 +408,9 @@ int bind(int sockfd, const struct sockaddr *myaddr, socklen_t addrlen);
 
 ![bind](img/bind.png)
 
-#### listen函数
+#### listen 函数
 
-listen函数仅由TCP服务器调用
+listen 函数仅由 TCP 服务器调用
 
 ```cpp
 #include <sys/socket.h>
@@ -422,12 +422,12 @@ int listen(int sockfd, int backlog);
 内核为任何一个给定的监听套接字维护两个队列
 ![listen_queue](img/listen_queue.png)
 ![listen_queue](img/listen_queue_2.png)
-不同backlog值时已排队的实际数目
+不同 backlog 值时已排队的实际数目
 ![backlog](img/backlog.png)
 
-#### accept函数
+#### accept 函数
 
-accept函数由TCP服务器调用，从已完成连接队列队头返回下一个已完成连接
+accept 函数由 TCP 服务器调用，从已完成连接队列队头返回下一个已完成连接
 
 ```cpp
 #include <sys/socket.h>
@@ -436,7 +436,7 @@ int accept(int sockfd, struct sockaddr *cliaddr, socklen_t *addrlen);
 // 若成功返回非负描述符，否则返回-1
 ```
 
-#### getsockname和getpeername函数
+#### getsockname 和 getpeername 函数
 
 ```cpp
 #include <sys/socket.h>
@@ -448,20 +448,20 @@ int getpeername(int sockfd, struct sockaddr *peeraddr, socklen_t *addrlen);
 
 使用场景：
 
-1. 在一个没有调用bind的TCP客户上，connect成功返回后，getsockname用于返回内核赋予该连接的本地IP地址和本地端口号。
-2. 在以端口号0（告知内核选择本地端口号）调用bind后，getsockname用于返回内核赋予的本地端口号。
-3. getsockname可用于获取某个套接字的地址族。
-4. 在一个以通配地址调用bind的TCP服务器上，与某个客户的连接一旦建立，就可以调用getsockname返回由内核赋予该连接的本地IP地址。
-5. 当一个服务器是由调用过accept的某个进程调用exec执行程序时，getpeername用于获取客户身份。
+1. 在一个没有调用 bind 的 TCP 客户上，connect 成功返回后，getsockname 用于返回内核赋予该连接的本地 IP 地址和本地端口号。
+2. 在以端口号 0（告知内核选择本地端口号）调用 bind 后，getsockname 用于返回内核赋予的本地端口号。
+3. getsockname 可用于获取某个套接字的地址族。
+4. 在一个以通配地址调用 bind 的 TCP 服务器上，与某个客户的连接一旦建立，就可以调用 getsockname 返回由内核赋予该连接的本地 IP 地址。
+5. 当一个服务器是由调用过 accept 的某个进程调用 exec 执行程序时，getpeername 用于获取客户身份。
 
 ### 并发服务器
 
-#### fork和exec函数
+#### fork 和 exec 函数
 
-fork有两个典型用法：  
+fork 有两个典型用法：
 
 1. 一个进程创建一个自身的副本。
-2. 一个进程想要执行另一个程序。首先调用fork创建一个自身的副本，然后其中一个副本调用exec将自身替换为新的程序。
+2. 一个进程想要执行另一个程序。首先调用 fork 创建一个自身的副本，然后其中一个副本调用 exec 将自身替换为新的程序。
 
 ```cpp
 #include <unistd.h>
@@ -479,12 +479,12 @@ int execvp(const char *filename, char *const argv[]);
 //均返回：若成功则不返回，若出错则为-1
 ```
 
-exec函数族
+exec 函数族
 ![exec](img/exec.png)
 
-#### close函数
+#### close 函数
 
-close函数也用来关闭套接字，并终止TCP连接
+close 函数也用来关闭套接字，并终止 TCP 连接
 
 ```cpp
 #include <unistd.h>
@@ -493,11 +493,11 @@ int close(int sockfd);
 // 若成功返回0，否则返回-1
 ```
 
-调用close函数使描述符引用计数减1，当引用计数为0，才会引发TCP的连接终止。
+调用 close 函数使描述符引用计数减 1，当引用计数为 0，才会引发 TCP 的连接终止。
 
-## 第5章 TCP客户&服务器程序示例
+## 第 5 章 TCP 客户&服务器程序示例
 
-### TCP回射服务器程序
+### TCP 回射服务器程序
 
 ```cpp
 #include "unp.h"
@@ -558,7 +558,7 @@ again:
 }
 ```
 
-### TCP回射客户程序
+### TCP 回射客户程序
 
 ```cpp
 #include "unp.h"
@@ -614,41 +614,41 @@ str_cli(FILE *fp, int sockfd)
 
 注意事项
 
-1. 当fork子进程时，必须捕获SIGCHLD信号
+1. 当 fork 子进程时，必须捕获 SIGCHLD 信号
 2. 当捕获信号时，必须处理被中断的系统调用
-3. SIGCHLD的信号处理函数必须正确编写，应使用waitpid函数以免留下僵死进程
+3. SIGCHLD 的信号处理函数必须正确编写，应使用 waitpid 函数以免留下僵死进程
 
-## 第6章 I/O复用：select和poll函数
+## 第 6 章 I/O 复用：select 和 poll 函数
 
-### I/O模型
+### I/O 模型
 
 ![compare_IO](img/compare_IO.png)
 
-#### 阻塞式I/O
+#### 阻塞式 I/O
 
 ![blockingIO](img/blocking%20IO.png)
 
-#### 非阻塞式I/O
+#### 非阻塞式 I/O
 
 ![noblockingIO](img/noblocking%20IO.png)
-当所请求的I/O操作非得把本进程投入睡眠才能完成时，不要把本进程投入睡眠，而是返回一个错误。
+当所请求的 I/O 操作非得把本进程投入睡眠才能完成时，不要把本进程投入睡眠，而是返回一个错误。
 
-#### I/O复用
+#### I/O 复用
 
 ![IO_multiplexing](img/IO_multiplexing.png)
-调用select或poll，阻塞在这两个系统调用中，而不是阻塞在真正的I/O系统调用上。
+调用 select 或 poll，阻塞在这两个系统调用中，而不是阻塞在真正的 I/O 系统调用上。
 
-#### 信号驱动式I/O
+#### 信号驱动式 I/O
 
 ![signal_driven_IO](img/signal_driven_IO.png)
-让内核在描述符就绪时发送SIGIO信号通知程序。
+让内核在描述符就绪时发送 SIGIO 信号通知程序。
 
-#### 异步I/O
+#### 异步 I/O
 
 ![yibu_IO](img/yibu_IO.png)
 告知内核启动某个操作，并让内核在整个操作完成后通知程序。
 
-### select函数
+### select 函数
 
 ![select](img/select.png)
 函数原型
@@ -662,16 +662,16 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struc
 
 #### 参数
 
-nfds：监控的文件描述符集里最大文件描述符加1，因为此参数会告诉内核检测前多少个文件描述符的状态
+nfds：监控的文件描述符集里最大文件描述符加 1，因为此参数会告诉内核检测前多少个文件描述符的状态
 readfds：监控有读数据到达文件描述符集合，传入传出参数
 writefds：监控写数据到达文件描述符集合，传入传出参数
 exceptfds：监控异常发生达文件描述符集合,如带外数据到达异常，传入传出参数
-fd_set类型：位图
-timeout：定时阻塞监控时间，3种情况
+fd_set 类型：位图
+timeout：定时阻塞监控时间，3 种情况
 
 1. NULL，永远等下去
-2. 设置timeval，等待固定时间
-3. 设置timeval里时间均为0，检查描述字后立即返回，轮询
+2. 设置 timeval，等待固定时间
+3. 设置 timeval 里时间均为 0，检查描述字后立即返回，轮询
 
 ```cpp
 struct timeval {
@@ -694,7 +694,7 @@ void FD_SET(int fd, fd_set *set);  // 把文件描述符集合里fd位置1
 void FD_ZERO(fd_set *set);       // 把文件描述符集合里所有位清0
 ```
 
-### poll函数
+### poll 函数
 
 ```cpp
 #include <poll.h>
@@ -709,9 +709,9 @@ struct pollfd {
 }
 ```
 
-## 第7章 套接字选项
+## 第 7 章 套接字选项
 
-### getsockopt和setsockopt函数
+### getsockopt 和 setsockopt 函数
 
 函数原型
 
@@ -726,20 +726,20 @@ int setsockopt(int sock, int level, int optname, const void *optval, socklen_t o
 参数
 
 1. sock：指向一个的打开的套接字描述符，也就是将要被设置或者获取选项的套接字。
-2. level：所在协议，或为通用套接字，或为某个特定协议（例如IPv4、IPv6、TCP或SCTP）
+2. level：所在协议，或为通用套接字，或为某个特定协议（例如 IPv4、IPv6、TCP 或 SCTP）
 
-    ```cpp
-    SOL_SOCKET     // 通用套接字
-    IPPROTO_IP     // IPv4套接字
-    IPPROTO_IPV6   // IPv6套接字
-    IPPROTO_TCP    // TCP套接字
-    ```
+   ```cpp
+   SOL_SOCKET     // 通用套接字
+   IPPROTO_IP     // IPv4套接字
+   IPPROTO_IPV6   // IPv6套接字
+   IPPROTO_TCP    // TCP套接字
+   ```
 
 3. optname：需要访问的选项名。
 4. optval：分为两大类型
-   1. 标识选项：为0表示相应的选项被禁止，不为零表示该选项被启用。标有“标识”的列表示这是标识选项。
+   1. 标识选项：为 0 表示相应的选项被禁止，不为零表示该选项被启用。标有“标识”的列表示这是标识选项。
    2. 值选项：设置或检查特定值。
-5. optlen：对于getsockopt()，作为入口参数，为选项值的最大长度。对于setsockopt()，作为出口参数，为选项值的实际长度。
+5. optlen：对于 getsockopt()，作为入口参数，为选项值的最大长度。对于 setsockopt()，作为出口参数，为选项值的实际长度。
 
 选项
 ![sockopt](img/sockopt_1.png)
@@ -749,20 +749,20 @@ int setsockopt(int sock, int level, int optname, const void *optval, socklen_t o
 
 #### SO_REUSEADDR
 
-一般来说，一个端口释放后会等待两分钟之后才能再被使用，SO_REUSEADDR是让端口释放后立即就可以被再次使用。  
-SO_REUSEADDR用于对TCP套接字处于TIME_WAIT状态下的socket，才可以重复绑定使用。  
-server程序总是应该在调用bind()之前设置SO_REUSEADDR套接字选项
-TCP，先调用close()的一方会进入TIME_WAIT状态。
-SO_REUSEADDR提供如下四个功能：
+一般来说，一个端口释放后会等待两分钟之后才能再被使用，SO_REUSEADDR 是让端口释放后立即就可以被再次使用。  
+SO_REUSEADDR 用于对 TCP 套接字处于 TIME_WAIT 状态下的 socket，才可以重复绑定使用。  
+server 程序总是应该在调用 bind()之前设置 SO_REUSEADDR 套接字选项
+TCP，先调用 close()的一方会进入 TIME_WAIT 状态。
+SO_REUSEADDR 提供如下四个功能：
 
-1. 允许启动一个监听服务器并捆绑其众所周知端口，即使以前建立的将此端口用做他们的本地端口的连接仍存在。这通常是重启监听服务器时出现，若不设置此选项，则bind时将出错
-2. 允许在同一端口上启动同一服务器的多个实例，只要每个实例捆绑一个不同的本地IP地址即可。对于TCP，我们根本不可能启动捆绑相同IP地址和相同端口号的多个服务器。
-3. 允许单个进程捆绑同一端口到多个套接口上，只要每个捆绑指定不同的本地IP地址即可。这一般不用于TCP服务器。
-4. SO_REUSEADDR允许完全重复的捆绑：当一个IP地址和端口绑定到某个套接口上时，还允许此IP地址和端口捆绑到另一个套接口上。一般来说，这个特性仅在支持多播的系统上才有，而且只对UDP套接口而言（TCP不支持多播）。
+1. 允许启动一个监听服务器并捆绑其众所周知端口，即使以前建立的将此端口用做他们的本地端口的连接仍存在。这通常是重启监听服务器时出现，若不设置此选项，则 bind 时将出错
+2. 允许在同一端口上启动同一服务器的多个实例，只要每个实例捆绑一个不同的本地 IP 地址即可。对于 TCP，我们根本不可能启动捆绑相同 IP 地址和相同端口号的多个服务器。
+3. 允许单个进程捆绑同一端口到多个套接口上，只要每个捆绑指定不同的本地 IP 地址即可。这一般不用于 TCP 服务器。
+4. SO_REUSEADDR 允许完全重复的捆绑：当一个 IP 地址和端口绑定到某个套接口上时，还允许此 IP 地址和端口捆绑到另一个套接口上。一般来说，这个特性仅在支持多播的系统上才有，而且只对 UDP 套接口而言（TCP 不支持多播）。
 
-## 第11章 名字与地址转换
+## 第 11 章 名字与地址转换
 
-### IP地址和域名之间的转换
+### IP 地址和域名之间的转换
 
 gethostbyname
 
@@ -786,11 +786,11 @@ gethostbyaddr
 
 ```cpp
 #include <netdb.h>
- 
+
 struct hostent * gethostbyaddr(const char * addr , socklen_t len , int family);
- 
+
 //成功时返回hostent结构体变量地址值，失败时返回NULL指针。
- 
+
 /* 变量含义 */
 // addr：含有IP地址信息的in_addr结构体指针。为了同时传递IPv4地址之外的其他信息，该变量的类型声明为char指针
 // len：向第一个参数传递的地址信息的字节数，IPv4时为4，IPv6时为16
@@ -820,7 +820,7 @@ struct servent *getservbyport(int port, const char *protoname);
 // 注意：port参数的值必须为网络字节序
 ```
 
-servent结构
+servent 结构
 
 ```cpp
 struct servent {
@@ -831,7 +831,7 @@ struct servent {
 };
 ```
 
-### getaddrinfo函数
+### getaddrinfo 函数
 
 函数原型
 
@@ -848,15 +848,15 @@ int getaddrinfo(const char *restrict nodename,
 ![getaddrinfo](img/getaddrinfo.png)
 参数
 
-1. nodename：主机名或者是数字化的地址字符串（IPv4的点分十进制串或IPv6的16进制串）。
+1. nodename：主机名或者是数字化的地址字符串（IPv4 的点分十进制串或 IPv6 的 16 进制串）。
 2. servname：服务名可以是十进制的端口号("8080")字符串，也可以是已定义的服务名称，如"ftp"、"http"等。
 3. hints：该参数指向用户设定的`struct addrinfo`
-4. 结构体，只能设定该结构体中`ai_family、ai_socktype、ai_protocol 和 ai_flags`四个域，其他域必须设置为0或者NULL, 通常是申请结构体变量后使用memset()初始化再设定指定的四个域。  
-该参数可以设置为NULL，等价于`ai_socktype = 0, ai_protocol = 0, ai_family = AF_UNSPEC, ai_flags = 0`
-   1. ai_family：指定返回地址的协议簇，取值AF_INET(IPv4)、AF_INET6(IPv6)、AF_UNSPEC(IPv4 and IPv6)
-   2. ai_socktype：用于设定返回地址的socket类型，有SOCK_STREAM、SOCK_DGRAM、SOCK_RAW，设置为0表示所有类型。
-   3. ai_socktype：协议IPPROTO_TCP、IPPROTO_UDP等，设置为0表示所有协议。
-   4. ai_flags：附加选项，多个选项可以使用或操作进行结合。  
+4. 结构体，只能设定该结构体中`ai_family、ai_socktype、ai_protocol 和 ai_flags`四个域，其他域必须设置为 0 或者 NULL, 通常是申请结构体变量后使用 memset()初始化再设定指定的四个域。  
+   该参数可以设置为 NULL，等价于`ai_socktype = 0, ai_protocol = 0, ai_family = AF_UNSPEC, ai_flags = 0`
+   1. ai_family：指定返回地址的协议簇，取值 AF_INET(IPv4)、AF_INET6(IPv6)、AF_UNSPEC(IPv4 and IPv6)
+   2. ai_socktype：用于设定返回地址的 socket 类型，有 SOCK_STREAM、SOCK_DGRAM、SOCK_RAW，设置为 0 表示所有类型。
+   3. ai_socktype：协议 IPPROTO_TCP、IPPROTO_UDP 等，设置为 0 表示所有协议。
+   4. ai_flags：附加选项，多个选项可以使用或操作进行结合。
 
 #### 配套函数
 
@@ -891,26 +891,26 @@ int getnameinfo(const struct sockaddr *sa, socklen_t salen,
 // 返回：若成功则为0
 ```
 
-## 第16章 非阻塞式I/O
+## 第 16 章 非阻塞式 I/O
 
 ### 阻塞的套接字调用
 
 ![blockingIO](img/blocking%20IO.png)
 可能阻塞的套接字调用可分为以下四类：
 
-1. 输入操作：read、readv、recv、recvfrom和recvmsg
-2. 输出操作：write、writev、send、sendto和sendmsg
+1. 输入操作：read、readv、recv、recvfrom 和 recvmsg
+2. 输出操作：write、writev、send、sendto 和 sendmsg
 3. 接受外来连接：accept
 4. 发起外出连接：connect
 
 ### 非阻塞式的套接字调用
 
 ![noblockingIO](img/noblocking%20IO.png)
-select/poll/epoll等多路复用API返回的事件并不一定可读写的，因此最好搭配非阻塞 I/O，以便应对极少数的特殊情况。例如，当数据已经到达，但经检查后发现有错误的校验和而被丢弃时，就会发生这种情况。
+select/poll/epoll 等多路复用 API 返回的事件并不一定可读写的，因此最好搭配非阻塞 I/O，以便应对极少数的特殊情况。例如，当数据已经到达，但经检查后发现有错误的校验和而被丢弃时，就会发生这种情况。
 
 #### select
 
-select函数见第6章
+select 函数见第 6 章
 
 ```cpp
 #include <stdio.h>
@@ -935,7 +935,7 @@ int main(void)
     // 创建监听套接字
  listen_fd = socket(AF_INET, SOCK_STREAM, 0);
  if (listen_fd == -1) return -1;
-    
+
     // 设置监听套接字地址并绑定
  struct sockaddr_in serv_addr, client_addr;
     socklen_t client_len;
@@ -956,7 +956,7 @@ int main(void)
 
     // 由于每次有读写事件会调用FD_SET改变r_fds, w_fds，因此需要r_set, w_set作备份
     fd_set r_fds, w_fds;
-    fd_set r_set, w_set; 
+    fd_set r_set, w_set;
 
     FD_ZERO(&r_fds);
     FD_SET(listen_fd, &r_fds); // 监听listen_fd的读事件
@@ -973,15 +973,15 @@ int main(void)
         w_set = w_fds;
         // 使用select阻塞等待读写事件就绪。r_set用于监听读事件，w_set用于监听写事件。
         n_ready = select(max_fd + 1, &r_set, &w_set, NULL, NULL); // 阻塞等待IO读写事件就绪
-        
+
         // 当有新的连接请求时，执行相应的处理。
         if (FD_ISSET(listen_fd, &r_set)) {
             printf("listen_fd --> \n");
             client_len = sizeof(client_addr);
-            conn_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_len); 
+            conn_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_len);
 
             FD_SET(conn_fd, &r_fds); // 将conn_fd添加到r_fds中监听
-            
+
             if (conn_fd > max_fd) {
                 max_fd = conn_fd;
             }
@@ -1016,19 +1016,19 @@ int main(void)
 
 ### epoll
 
-epoll是Linux下多路复用IO接口select/poll的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率。
+epoll 是 Linux 下多路复用 IO 接口 select/poll 的增强版本，它能显著提高程序在大量并发连接中只有少量活跃的情况下的系统 CPU 利用率。
 
 #### 机制
 
-select的缺点：
+select 的缺点：
 
-1. 每次调用select都需要将进程加入到所有监视socket的等待队列，每次唤醒都需要从每个队列中移除（两次遍历），并且每次都要将整个fds列表传递给内核。
-2. 进程被唤醒后，需要遍历寻找哪些socket收到数据。
+1. 每次调用 select 都需要将进程加入到所有监视 socket 的等待队列，每次唤醒都需要从每个队列中移除（两次遍历），并且每次都要将整个 fds 列表传递给内核。
+2. 进程被唤醒后，需要遍历寻找哪些 socket 收到数据。
 
-epoll的方案：
+epoll 的方案：
 
-1. epoll 在内核里使用红黑树来跟踪进程所有待检测的文件描述字，把需要监控的socket通过`epoll_ctl()`函数加入内核中的红黑树里，红黑树是个高效的数据结构，增删查一般时间复杂度是 O(logn)，通过对这棵黑红树进行操作，这样就不需要像select/poll每次操作时都传入整个socket集合，只需要传入一个待检测的socket，减少了内核和用户空间大量的数据拷贝和内存分配。
-2. epoll使用事件驱动的机制，内核里维护了一个链表来记录就绪事件，当某个socket有事件发生时，通过回调函数内核会将其加入到这个就绪事件列表中，当用户调用`epoll_wait()`函数时，只会返回有事件发生的文件描述符的个数，不需要像select/poll那样轮询扫描整个socket集合，大大提高了检测的效率。
+1. epoll 在内核里使用红黑树来跟踪进程所有待检测的文件描述字，把需要监控的 socket 通过`epoll_ctl()`函数加入内核中的红黑树里，红黑树是个高效的数据结构，增删查一般时间复杂度是 O(logn)，通过对这棵黑红树进行操作，这样就不需要像 select/poll 每次操作时都传入整个 socket 集合，只需要传入一个待检测的 socket，减少了内核和用户空间大量的数据拷贝和内存分配。
+2. epoll 使用事件驱动的机制，内核里维护了一个链表来记录就绪事件，当某个 socket 有事件发生时，通过回调函数内核会将其加入到这个就绪事件列表中，当用户调用`epoll_wait()`函数时，只会返回有事件发生的文件描述符的个数，不需要像 select/poll 那样轮询扫描整个 socket 集合，大大提高了检测的效率。
 
 ![epoll_func](img/epoll_func.png)
 
@@ -1036,16 +1036,16 @@ epoll的方案：
 
 水平触发（level-triggered，LT）
 
-* socket读触发：socket接收缓冲区有数据，会一直触发epoll_wait EPOLLIN事件，直到数据被用户读取完。
-* socket写触发：socket可写，会一直触发epoll_wait EPOLLOUT事件。
+- socket 读触发：socket 接收缓冲区有数据，会一直触发 epoll_wait EPOLLIN 事件，直到数据被用户读取完。
+- socket 写触发：socket 可写，会一直触发 epoll_wait EPOLLOUT 事件。
 
 边缘触发（edge-triggered，ET）
 
-* socket读触发：socket数据从无到有，只会会触发一次epoll_wait EPOLLIN事件。用户检测到事件后，需一次性把socket接收缓冲区数据全部读取完，读取完的标志为recv返回-1，errno为EAGAIN。
-* socket写触发：socket可写，会触发一次epoll_wait EPOLLOUT事件。
+- socket 读触发：socket 数据从无到有，只会会触发一次 epoll_wait EPOLLIN 事件。用户检测到事件后，需一次性把 socket 接收缓冲区数据全部读取完，读取完的标志为 recv 返回-1，errno 为 EAGAIN。
+- socket 写触发：socket 可写，会触发一次 epoll_wait EPOLLOUT 事件。
 
 两种模式比较：
-水平触发epoll_wait的系统调用次数更多，效率较低；边缘触发I/O事件发生时只会通知一次，因此需要尽可能地读写数据，以免错失读写的机会。
+水平触发 epoll_wait 的系统调用次数更多，效率较低；边缘触发 I/O 事件发生时只会通知一次，因此需要尽可能地读写数据，以免错失读写的机会。
 
 #### 接口
 
@@ -1073,7 +1073,7 @@ struct epoll_event {
     __uint32_t events; /* Epoll events */
     epoll_data_t data; /* User data variable */
 };
-/* events取值: 
+/* events取值:
     EPOLLIN ： 表示对应的文件描述符可以读（包括对端SOCKET正常关闭）
    EPOLLOUT： 表示对应的文件描述符可以写
    EPOLLPRI： 表示对应的文件描述符有紧急的数据可读（这里应该表示有带外数据到来）
@@ -1104,50 +1104,50 @@ int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
 // 返回值：成功，返回有多少文件描述符就绪；超时，返回0；出错，返回-1
 ```
 
-### Reactor和Proactor
+### Reactor 和 Proactor
 
-#### Reactor模式
+#### Reactor 模式
 
-Reactor指“对事件反应”。I/O多路复用（select/epoll等）监听事件，收到事件后，根据事件类型分配（Dispatch）给某个进程/线程，Reactor模式也叫Dispatcher模式。  
-Reactor模式主要由两个核心部分组成：
+Reactor 指“对事件反应”。I/O 多路复用（select/epoll 等）监听事件，收到事件后，根据事件类型分配（Dispatch）给某个进程/线程，Reactor 模式也叫 Dispatcher 模式。  
+Reactor 模式主要由两个核心部分组成：
 
 1. Reactor：负责监听和分发事件
 2. 处理资源池：负责处理事件
 
-Reactor模式有三种方案：
+Reactor 模式有三种方案：
 
-1. 单Reactor单进程/线程
-![reactor_1](img/reactor_1.png)
-Reactor对象监听和分发事件，如果是建立连接的事件，则分发给Acceptor对象；否则分发给Handler对象。  
+1. 单 Reactor 单进程/线程
+   ![reactor_1](img/reactor_1.png)
+   Reactor 对象监听和分发事件，如果是建立连接的事件，则分发给 Acceptor 对象；否则分发给 Handler 对象。
 
-2. 单Reactor多进程/线程
-![reactor_2](img/reactor_2.png)
-Handler对象不再负责业务处理，只负责数据的接收和发送，Handler对象读取到数据后，会将数据发给子线程里的 Processor对象进行业务处理。处理完后，将结果发回主线程中的Handler对象，接着由Handler将响应结果发送给client；
+2. 单 Reactor 多进程/线程
+   ![reactor_2](img/reactor_2.png)
+   Handler 对象不再负责业务处理，只负责数据的接收和发送，Handler 对象读取到数据后，会将数据发给子线程里的 Processor 对象进行业务处理。处理完后，将结果发回主线程中的 Handler 对象，接着由 Handler 将响应结果发送给 client；
 
-3. 多Reactor多进程/线程
-![reactor_3](img/reactor_3.png)
-主线程中的MainReactor对象监控连接建立事件，收到事件后通过Acceptor对象中的accept获取连接，将新的连接分配给某个子线程。子线程中的SubReactor对象对分配的连接继续进行监听，并创建一个Handler用于处理连接的响应事件。
+3. 多 Reactor 多进程/线程
+   ![reactor_3](img/reactor_3.png)
+   主线程中的 MainReactor 对象监控连接建立事件，收到事件后通过 Acceptor 对象中的 accept 获取连接，将新的连接分配给某个子线程。子线程中的 SubReactor 对象对分配的连接继续进行监听，并创建一个 Handler 用于处理连接的响应事件。
 
-#### Proactor模式
+#### Proactor 模式
 
-阻塞I/O或非阻塞I/O都是同步调用，因为内核将数据从内核空间拷贝到用户空间的过程都是需要等待的，也就是说这个过程是同步的。如果内核实现的拷贝效率不高，read/send调用就会在这个同步过程中等待比较长的时间。  
-异步I/O不需要在“内核数据准备好”和“数据从内核态拷贝到用户态”这两个过程等待。当发起异步I/O之后，就立即返回。内核自动将数据从内核空间拷贝到用户空间，这个拷贝过程同样是异步的，内核自动完成后发送通知。
+阻塞 I/O 或非阻塞 I/O 都是同步调用，因为内核将数据从内核空间拷贝到用户空间的过程都是需要等待的，也就是说这个过程是同步的。如果内核实现的拷贝效率不高，read/send 调用就会在这个同步过程中等待比较长的时间。  
+异步 I/O 不需要在“内核数据准备好”和“数据从内核态拷贝到用户态”这两个过程等待。当发起异步 I/O 之后，就立即返回。内核自动将数据从内核空间拷贝到用户空间，这个拷贝过程同样是异步的，内核自动完成后发送通知。
 ![proactor](img/proactor.png)
-Proactor模式的工作流程：
+Proactor 模式的工作流程：
 
-1. Proactor Initiator负责创建Proactor和Handler对象，并将Proactor和Handler都通过异步操作处理器注册到内核。
-2. 异步操作处理器负责处理注册请求，并处理I/O操作。
-3. 完成I/O操作后通知Proactor。
-4. Proactor根据不同的事件类型回调不同的Handler进行业务处理。
+1. Proactor Initiator 负责创建 Proactor 和 Handler 对象，并将 Proactor 和 Handler 都通过异步操作处理器注册到内核。
+2. 异步操作处理器负责处理注册请求，并处理 I/O 操作。
+3. 完成 I/O 操作后通知 Proactor。
+4. Proactor 根据不同的事件类型回调不同的 Handler 进行业务处理。
 
 #### 比较
 
-* Reactor 是非阻塞同步网络模式，感知的是就绪可读写事件。在每次感知到有事件发生（比如可读就绪事件）后，就需要应用进程主动将socket接收缓存中的数据读到缓冲区中。这个过程是同步的，读取完数据后应用进程才能处理数据。
-* Proactor是异步网络模式，感知的是已完成的读写事件。在发起异步读写请求时，需要传入数据缓冲区的地址（用来存放结果数据）等信息，系统内核自动把数据的读写工作完成。操作系统完成读写工作后，就会通知应用进程直接处理数据。
+- Reactor 是非阻塞同步网络模式，感知的是就绪可读写事件。在每次感知到有事件发生（比如可读就绪事件）后，就需要应用进程主动将 socket 接收缓存中的数据读到缓冲区中。这个过程是同步的，读取完数据后应用进程才能处理数据。
+- Proactor 是异步网络模式，感知的是已完成的读写事件。在发起异步读写请求时，需要传入数据缓冲区的地址（用来存放结果数据）等信息，系统内核自动把数据的读写工作完成。操作系统完成读写工作后，就会通知应用进程直接处理数据。
 
-*在Linux下的aio系列异步I/O函数，是由POSIX定义的异步操作接口。aio的实现不是真正的操作系统级别支持的，而是在用户空间模拟出来的异步，并且仅仅支持基于本地文件的aio异步操作，不支持网络编程中的socket，这也使得过去基于Linux的高性能网络程序都是使用Reactor方案。  
-而Windows里实现了一套完整的支持socket的异步编程接口IOCP，是由操作系统级别实现的、真正意义上异步I/O，因此在Windows里实现高性能网络程序可以使用效率更高的Proactor方案。  
-2019年，Linux内核加入了`io_uring`，减少了在用户空间和内核空间之间的数据拷贝，并降低系统调用的开销，从而提高I/O操作的性能。*
+_在 Linux 下的 aio 系列异步 I/O 函数，是由 POSIX 定义的异步操作接口。aio 的实现不是真正的操作系统级别支持的，而是在用户空间模拟出来的异步，并且仅仅支持基于本地文件的 aio 异步操作，不支持网络编程中的 socket，这也使得过去基于 Linux 的高性能网络程序都是使用 Reactor 方案。  
+而 Windows 里实现了一套完整的支持 socket 的异步编程接口 IOCP，是由操作系统级别实现的、真正意义上异步 I/O，因此在 Windows 里实现高性能网络程序可以使用效率更高的 Proactor 方案。  
+2019 年，Linux 内核加入了`io_uring`，减少了在用户空间和内核空间之间的数据拷贝，并降低系统调用的开销，从而提高 I/O 操作的性能。_
 
 #### io_uring
 
@@ -1160,7 +1160,7 @@ CQE：完成队列项
 
 ##### 初始化
 
-初始化io_uring
+初始化 io_uring
 
 ```cpp
 long io_uring_setup(u32 entries, struct io_uring_params __user *params);
@@ -1168,40 +1168,40 @@ long io_uring_setup(u32 entries, struct io_uring_params __user *params);
 ```
 
 ![io_uring](img/io_uring.png)
-在 io_setup 返回的时候，内核已经初始化好了SQ和CQ，此外，内核还提供了一个Submission Queue Entries（SQEs）数组。
+在 io_setup 返回的时候，内核已经初始化好了 SQ 和 CQ，此外，内核还提供了一个 Submission Queue Entries（SQEs）数组。
 ![io_uring](img/io_uring_SQE.png)
-之所以额外采用了一个数组保存SQEs，是为了方便通过RingBuffer提交内存上不连续的请求。SQ和CQ中每个节点保存的都是SQEs数组的偏移量，而不是实际的请求，实际的请求只保存在SQEs数组中。  
-但由于SQ，CQ，SQEs是在内核中分配的，所以用户态程序并不能直接访问。因此io_setup的返回一个fd，应用程序通过这个fd进行内存映射（mmap）操作，和kernel共享内存。
+之所以额外采用了一个数组保存 SQEs，是为了方便通过 RingBuffer 提交内存上不连续的请求。SQ 和 CQ 中每个节点保存的都是 SQEs 数组的偏移量，而不是实际的请求，实际的请求只保存在 SQEs 数组中。  
+但由于 SQ，CQ，SQEs 是在内核中分配的，所以用户态程序并不能直接访问。因此 io_setup 的返回一个 fd，应用程序通过这个 fd 进行内存映射（mmap）操作，和 kernel 共享内存。
 
-##### I/O提交
+##### I/O 提交
 
-I/O提交的做法是找到一个空闲的SQE，根据请求设置SQE，并将这个SQE的索引放到SQ中。SQ是一个RingBuffer，有head，tail两个成员，如果`head == tail`，意味着队列为空。SQE设置完成后，需要修改SQ的tail，以表示向RingBuffer中插入一个请求。  
-当所有I/O请求都加入SQ后，调用`io_uring_enter`来提交请求。
+I/O 提交的做法是找到一个空闲的 SQE，根据请求设置 SQE，并将这个 SQE 的索引放到 SQ 中。SQ 是一个 RingBuffer，有 head，tail 两个成员，如果`head == tail`，意味着队列为空。SQE 设置完成后，需要修改 SQ 的 tail，以表示向 RingBuffer 中插入一个请求。  
+当所有 I/O 请求都加入 SQ 后，调用`io_uring_enter`来提交请求。
 
 ```cpp
 int io_uring_enter(unsigned int fd, u32 to_submit, u32 min_complete, u32 flags);
 ```
 
-如果在调用`io_uring_setup`时设置了`IORING_SETUP_SQPOLL`的flag，内核会额外启动一个内核线程，称为SQ线程。这个内核线程可以运行在某个指定的core上（通过`sq_thread_cpu`配置）。这个内核线程会不停的Poll SQ，除非在一段时间内没有Poll到任何请求（通过`sq_thread_idle`配置），才会被挂起，由此减少系统调用`io_uring_enter`的次数。
+如果在调用`io_uring_setup`时设置了`IORING_SETUP_SQPOLL`的 flag，内核会额外启动一个内核线程，称为 SQ 线程。这个内核线程可以运行在某个指定的 core 上（通过`sq_thread_cpu`配置）。这个内核线程会不停的 Poll SQ，除非在一段时间内没有 Poll 到任何请求（通过`sq_thread_idle`配置），才会被挂起，由此减少系统调用`io_uring_enter`的次数。
 
-##### I/O收割
+##### I/O 收割
 
-当I/O完成时，内核负责将完成I/O在SQEs中的index放到CQ中。由于内核和用户态共享内存，因此只需在用户态遍历CQ，就能获取完成的I/O队列，之后找到相应的CQE并进行处理，最后移动head指针到tail，I/O收割就完成了。  
-由于I/O在提交的时候可以顺便返回完成的I/O，所以在最理想的情况下，I/O提交和收割都不需要使用系统调用。
+当 I/O 完成时，内核负责将完成 I/O 在 SQEs 中的 index 放到 CQ 中。由于内核和用户态共享内存，因此只需在用户态遍历 CQ，就能获取完成的 I/O 队列，之后找到相应的 CQE 并进行处理，最后移动 head 指针到 tail，I/O 收割就完成了。  
+由于 I/O 在提交的时候可以顺便返回完成的 I/O，所以在最理想的情况下，I/O 提交和收割都不需要使用系统调用。
 
 ##### 交互方式
 
 ![io_uring](img/io_uring_submit.png)
 用户提交：
 
-1. 将SQE写入SQEs区域，然后将SQE编号写入SQ。
+1. 将 SQE 写入 SQEs 区域，然后将 SQE 编号写入 SQ。
 2. 更新用户态记录的队头。
-3. 如果有多个任务需要同时提交，不断重复1, 2。
-4. 将最终的队头编号写入与内核共享的SQ head。
+3. 如果有多个任务需要同时提交，不断重复 1, 2。
+4. 将最终的队头编号写入与内核共享的 SQ head。
 
 ![io_uring](img/io_uring_reap.png)
 完成任务：
 
-1. 内核态获取任务：从队尾读取SQE，并更新SQ tail。
-2. 内核态完成任务：往CQ中写入CQE，并更新CQ head。
-3. 用户态收割任务：从CQ中读取CQE，更新CQ tail。
+1. 内核态获取任务：从队尾读取 SQE，并更新 SQ tail。
+2. 内核态完成任务：往 CQ 中写入 CQE，并更新 CQ head。
+3. 用户态收割任务：从 CQ 中读取 CQE，更新 CQ tail。
