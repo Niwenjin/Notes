@@ -6,7 +6,8 @@
 **创建型模式**  
 [工厂模式](#工厂模式)  
 **结构型模式**  
-**行为模式**
+**行为模式**  
+[观察者模式](#观察者模式)
 
 ## 设计模式的六大原则
 
@@ -251,6 +252,123 @@ public:
 ### 模板方法模式
 
 ### 观察者模式
+
+观察者模式（Observer Pattern）提供了一种一对多的模式，多个观察者对象同时监听一个主题对象，一旦主题对象发生变化，能够自动通知所有的观察者对象。它提供了一种关联对象之间的同步机制，他们之间通过通信来保持状态同步。
+
+有两大类（主题和观察者）一共四个角色：
+
+* Subject：抽象主题角色，被观察的对象，当被观察的状态发生变化时，会通知所有的观察者，Subject一般包含了所有观察者对象的引用（集合）；
+* ConcreteSubject：具体主题，被观察者的具体实现，当状态发生改变时，向所有观察者发出通知；
+* Observer：抽象观察者，提供统一的接口，在得到通知时执行某些操作；
+* ConcreteObserver：具体观察者，实现抽象观察者提供的接口；
+
+![observer](img/observer.png)
+
+实现要点：
+
+1. 被观察者提供注册和注销的接口，用指针数组存储注册的观察者；
+2. 被观察者提供通知接口（Notify），当发生变化时循环遍历注册的观察者，进行通知；
+3. 观察者实现收到通知的行为。
+
+```cpp
+//
+//观察者模式
+//
+
+class Observer;
+//抽象被观察者
+class Subject {
+public:
+    Subject() : m_nState(0) {}
+
+    virtual ~Subject() = default;
+
+    virtual void Attach(const std::shared_ptr<Observer> pObserver) = 0;
+
+    virtual void Detach(const std::shared_ptr<Observer> pObserver) = 0;
+
+    virtual void Notify() = 0;
+
+    virtual int GetState() { return m_nState; }
+
+    void SetState(int state) {
+        std::cout << "Subject updated !" << std::endl;
+        m_nState = state;
+    }
+
+protected:
+    std::list<std::shared_ptr<Observer>> m_pObserver_list;
+    int m_nState;
+};
+
+//抽象观察者
+class Observer {
+public:
+    virtual ~Observer() = default;
+
+    Observer(const std::shared_ptr<Subject> pSubject, const std::string &name = "unknown")
+            : m_pSubject(pSubject), m_strName(name) {}
+
+    virtual void Update() = 0;
+
+    virtual const std::string &name() { return m_strName; }
+
+protected:
+    std::shared_ptr<Subject> m_pSubject;
+    std::string m_strName;
+};
+
+//具体被观察者
+class ConcreteSubject : public Subject {
+public:
+    void Attach(const std::shared_ptr<Observer> pObserver) override {
+        auto iter = std::find(m_pObserver_list.begin(), m_pObserver_list.end(), pObserver);
+        if (iter == m_pObserver_list.end()) {
+            std::cout << "Attach observer" << pObserver->name() << std::endl;
+            m_pObserver_list.emplace_back(pObserver);
+        }
+
+    }
+
+    void Detach(const std::shared_ptr<Observer> pObserver) override {
+        std::cout << "Detach observer" << pObserver->name() << std::endl;
+        m_pObserver_list.remove(pObserver);
+    }
+
+    //循环通知所有观察者
+    void Notify() override {
+        auto it = m_pObserver_list.begin();
+        while (it != m_pObserver_list.end()) {
+            (*it++)->Update();
+        }
+    }
+};
+
+
+//具体观察者1
+class Observer1 : public Observer {
+public:
+    Observer1(const std::shared_ptr<Subject> pSubject, const std::string &name = "unknown")
+            : Observer(pSubject, name) {}
+
+    void Update() override {
+        std::cout << "Observer1_" << m_strName << " get the update.New state is: "
+                  << m_pSubject->GetState() << std::endl;
+    }
+};
+
+//具体观察者2
+class Observer2 : public Observer {
+public:
+    Observer2(const std::shared_ptr<Subject> pSubject, const std::string &name = "unknown")
+            : Observer(pSubject, name) {}
+
+    void Update() override {
+        std::cout << "Observer2_" << m_strName << " get the update.New state is: "
+                  << m_pSubject->GetState() << std::endl;
+    }
+};
+```
 
 ### 迭代子模式
 
