@@ -2,7 +2,7 @@
 
 ## 目录
 
-[shell 命令](#shell命令)  
+[shell 命令](#shell-命令)  
 [git 常用命令](#git)  
 [GCC](#gcc)  
 [GDB](#gdb)  
