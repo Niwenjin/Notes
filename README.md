@@ -12,6 +12,8 @@
 
 [LeetCode](LeetCode/leetcode.md)
 
+[Latex](Latex/latex.md)
+
 ## 读书笔记
 
 [C++ Primer](C++Primer/C++Primer.md)
