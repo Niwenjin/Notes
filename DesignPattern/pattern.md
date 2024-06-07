@@ -5,41 +5,44 @@
 [设计模式的六大原则](#设计模式的六大原则)  
 **创建型模式**  
 [工厂模式](#工厂模式)  
+[单例模式](#单例模式)  
+[建造者模式](#建造者模式)  
+[原型模式](#原型模式)  
 **结构型模式**  
 **行为模式**  
 [观察者模式](#观察者模式)
 
 ## 设计模式的六大原则
 
-总原则：开闭原则（Open Close Principle）
+**总原则：开闭原则（Open Close Principle）**
 
 开闭原则就是说对扩展开放，对修改关闭。在程序需要进行拓展的时候，不能去修改原有的代码，而是要扩展原有代码，实现一个热插拔的效果。所以一句话概括就是：为了使程序的扩展性好，易于维护和升级。想要达到这样的效果，我们需要使用接口和抽象类等，后面的具体设计中我们会提到这点。
 
-### 单一职责原则
+**单一职责原则**
 
 不要存在多于一个导致类变更的原因，也就是说每个类应该实现单一的职责，如若不然，就应该把类拆分。
 
-### 里氏替换原则（Liskov Substitution Principle）
+**里氏替换原则（Liskov Substitution Principle）**
 
 里氏代换原则(Liskov Substitution Principle LSP)面向对象设计的基本原则之一。里氏代换原则中说，任何基类可以出现的地方，子类一定可以出现。LSP 是继承复用的基石，只有当衍生类可以替换掉基类，软件单位的功能不受到影响时，基类才能真正被复用，而衍生类也能够在基类的基础上增加新的行为。里氏代换原则是对“开-闭”原则的补充。实现“开-闭”原则的关键步骤就是抽象化。而基类与子类的继承关系就是抽象化的具体实现，所以里氏代换原则是对实现抽象化的具体步骤的规范。
 
 历史替换原则中，子类对父类的方法尽量不要重写和重载。因为父类代表了定义好的结构，通过这个规范的接口与外界交互，子类不应该随便破坏它。
 
-### 依赖倒转原则（Dependence Inversion Principle）
+**依赖倒转原则（Dependence Inversion Principle）**
 
 这个是开闭原则的基础，具体内容：面向接口编程，依赖于抽象而不依赖于具体。写代码时用到具体类时，不与具体类交互，而与具体类的上层接口交互。
 
-### 接口隔离原则（Interface Segregation Principle）
+**接口隔离原则（Interface Segregation Principle）**
 
 这个原则的意思是：每个接口中不存在子类用不到却必须实现的方法，如果不然，就要将接口拆分。使用多个隔离的接口，比使用单个接口（多个接口方法集合到一个的接口）要好。
 
-### 迪米特法则（最少知道原则）（Demeter Principle）
+**迪米特法则（最少知道原则）（Demeter Principle）**
 
 一个类对自己依赖的类知道的越少越好。也就是说无论被依赖的类多么复杂，都应该将逻辑封装在方法的内部，通过 public 方法提供给外部。这样当被依赖的类变化时，才能最小的影响该类。
 
 最少知道原则的另一个表达方式是：只与直接的朋友通信。类之间只要有耦合关系，就叫朋友关系。耦合分为依赖、关联、聚合、组合等。我们称出现为成员变量、方法参数、方法返回值中的类为直接朋友。局部变量、临时变量则不是直接的朋友。我们要求陌生的类不要作为局部变量出现在类中。
 
-### 合成复用原则（Composite Reuse Principle）
+**合成复用原则（Composite Reuse Principle）**
 
 原则是尽量首先使用合成/聚合的方式，而不是使用继承。
 
@@ -221,9 +224,283 @@ public:
 
 ### 单例模式
 
+单例模式是指在整个系统生命周期内，保证一个类只能产生一个实例，确保该类的唯一性。
+
+单例类的特点：
+
+1. 构造函数和析构函数为私有类型，目的是禁止外部构造和析构。
+2. 拷贝构造函数和赋值构造函数是私有类型，目的是禁止外部拷贝和赋值，确保实例的唯一性。
+3. 类中有一个获取实例的静态方法，可以全局访问。
+
+```cpp
+class Single
+{
+
+public:
+    // 获取单实例对象
+    static Single& GetInstance();
+
+private:
+    // 禁止外部构造
+    Single();
+
+    // 禁止外部析构
+    ~Single();
+
+    // 禁止外部拷贝构造
+    Single(const Single &single) = delete;
+
+    // 禁止外部赋值操作
+    const Single &operator=(const Single &single) = delete;
+};
+
+Single& Single::GetInstance()
+{
+    /**
+     * 局部静态特性的方式实现单实例。
+     * 静态局部变量只在当前函数内有效，其他函数无法访问。
+     * 静态局部变量只在第一次被调用的时候初始化，也存储在静态存储区，生命周期从第一次被初始化起至程序结束止。
+     * 静态局部变量是线程安全的
+     */
+    static Single single;
+    return single;
+}
+```
+
 ### 建造者模式
 
+将一个复杂对象的构造与它的表示分离，使同样的构建过程可以创建不同的表示。
+
+实现要点：
+
+1. 抽象建造者类: 为创建产品各个部分，统一抽象接口；
+2. 具体建造者类：具体实现抽象建造者各个部件的接口；
+3. 抽象产品类（可选）：为产品提供统一接口；
+4. 具体产品类:实现抽象产品类的接口；
+5. **指挥类**：负责安排和调度复杂对象的各个建造过程。
+
+```cpp
+/*
+1. 抽象产品类
+*/
+class AbstractProduct
+{
+  public:
+	virtual ~AbstractProduct() {}
+	virtual void setDisplay(string display) = 0;
+	virtual void setHost(string host) = 0;
+	virtual void setKeyBoard(string KeyBoard) = 0;
+	virtual void setMouse(string mouse) = 0;
+	virtual void show() = 0;
+};
+
+/*
+2. 具体产品类
+*/
+class Computer:public AbstractProduct
+{
+  public:
+	~Computer() {}
+	void setDisplay(string display)
+	{
+		m_vec.emplace_back(display);
+	}
+	void setHost(string host)
+	{
+		m_vec.emplace_back(host);
+	}
+	void setKeyBoard(string KeyBoard)
+	{
+		m_vec.emplace_back(KeyBoard);
+	}
+	void setMouse(string mouse)
+	{
+		m_vec.emplace_back(mouse);
+	}
+	void show()
+	{
+		cout << "----------组装电脑---------" << endl;
+		for (auto& x : m_vec)
+		{
+			cout << x << endl;
+		}
+	}
+  private:
+	vector<string> m_vec;
+};
+
+/*
+3. 抽象建造者
+*/
+class AbstractBuilder
+{
+  public:
+	//创建电脑产品
+	AbstractBuilder()
+		:product(new Computer) {}
+	virtual ~AbstractBuilder() {}
+	//抽象电脑产品创建的统一抽象接口
+	virtual void BuildDisplay(string display) = 0;
+	virtual void BuildHost(string host) = 0;
+	virtual void BuildKeyBoard(string KeyBoard) = 0;
+	virtual void BuildMouse(string mouse) = 0;
+	AbstractProduct* getProduct()
+	{
+		return product;
+	}
+  protected:
+	AbstractProduct* product;
+};
+
+/*
+4. 具体建造者：具体实现抽象建造者各个部件的接口
+*/
+class ComputerBuilder :public AbstractBuilder
+{
+  public:
+	~ComputerBuilder() {}
+	void BuildDisplay(string display)
+	{
+		product->setDisplay(display);
+	}
+	void BuildHost(string host)
+	{
+		product->setHost(host);
+	}
+	void BuildKeyBoard(string KeyBoard)
+	{
+		product->setKeyBoard(KeyBoard);
+	}
+	void BuildMouse(string mouse)
+	{
+		product->setMouse(mouse);
+	}
+};
+
+/*
+5. 指挥者：安排和调度复杂对象的创建过程
+*/
+class Director
+{
+  public:
+	Director(AbstractBuilder* builder)
+		:m_builder(builder) {}
+	~Director() {}
+	AbstractProduct* createComputer(string display, string host, string KeyBoard, string mouse)
+	{
+		m_builder->BuildDisplay(display);
+		m_builder->BuildHost(host);
+		m_builder->BuildKeyBoard(KeyBoard);
+		m_builder->BuildMouse(mouse);
+		return m_builder->getProduct();
+	}
+  private:
+	AbstractBuilder* m_builder;
+};
+```
+
 ### 原型模式
+
+用原型实例指定创建对象的种类，并通过拷贝这些原型创建新的对象，简单理解就是“克隆指定对象”。
+
+实现要点：
+
+1. 抽象原型类：规定了具体原型对象必须实现的接口；
+2. 具体原型类：实现抽象原型类的 clone() 方法，它是可被复制的对象；
+3. 访问类：使用具体原型类中的 clone() 方法来复制新的对象。
+
+```cpp
+//1. 抽象原型类
+class Shape
+{
+  public:
+	virtual ~Shape() {}
+	virtual Shape* clone() = 0;
+	virtual int getid() = 0;
+	virtual string getType() = 0;
+  protected:
+	string Type;
+  private:
+	int id;
+};
+
+//2. 三个形状具体原型
+class Circle :public Shape
+{
+  public:
+	Circle(string Type, int id) :Type(Type), id(id) {}
+	~Circle() {}
+	//Circle(const Circle& lhs) { Type = lhs.Type, id = lhs.id; }
+	Shape* clone() { return new Circle{ *this }; }
+	int getid() { return id; }
+	string getType() { return Type; }
+  protected:
+	string Type;
+  private:
+	int id;
+};
+
+class Rectangle :public Shape
+{
+  public:
+	Rectangle(string Type, int id) :Type(Type), id(id) {}
+	~Rectangle() {}
+	Rectangle(const Rectangle& lhs) { Type = lhs.Type, id = lhs.id; }
+	Shape* clone() { return new Rectangle{ *this }; }
+	int getid() { return id; }
+	string getType() { return Type; }
+  protected:
+	string Type;
+  private:
+	int id;
+};
+
+class Square :public Shape
+{
+  public:
+	Square(string Type, int id) :Type(Type), id(id) {}
+	~Square() {}
+	Square(const Square& lhs) { Type = lhs.Type, id = lhs.id; }
+	Shape* clone() { return new Square{ *this }; }
+	int getid() { return id; }
+	string getType() { return Type; }
+  protected:
+	string Type;
+  private:
+	int id;
+};
+
+//3. 存储对象种类的数据库
+class ShapeType
+{
+  public:
+	~ShapeType()
+	{
+		for (auto& x : ShapeMap)
+		{
+			delete x.second;
+			x.second = nullptr;
+		}
+	}
+	//构造原始对象
+	ShapeType()
+	{
+		Circle* circle = new Circle{ "圆形",1 };
+		Square* square = new Square{"正方形",2};
+		Rectangle* rectangle = new Rectangle{"矩形",3};
+		ShapeMap.emplace(circle->getType(), circle);
+		ShapeMap.emplace(square->getType(), square);
+		ShapeMap.emplace(rectangle->getType(), rectangle);
+	}
+	//根据你所需要的种类来获得克隆对象
+	Shape* getShape(string Type)
+	{
+		return ShapeMap[Type]->clone();
+	}
+  private:
+	unordered_map<string, Shape*> ShapeMap;
+};
+```
 
 ## 结构型模式
 
