@@ -16,13 +16,13 @@
 
 [C++ Primer](C++Primer/C++Primer.md)
 
-[Unix高级环境编程](APUE/apue.md)
+[Unix 高级环境编程](APUE/apue.md)
 
-[Unix网络编程](unp/unp.md)
+[Unix 网络编程](unp/unp.md)
 
-[Linux多线程服务端编程：使用muduo网络库](muduo/muduo.md)
+[Linux 多线程服务端编程：使用 muduo 网络库](muduo/muduo.md)
 
-[SQL必知必会](SQL/sql.md)
+[SQL 必知必会](SQL/sql.md)
 
 [Effective C++](Effective/effectivec++.md)
 
@@ -36,8 +36,8 @@
 
 Ceph
 
-* [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)  
-* [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
-* [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
+- [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)
+- [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
+- [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
 
 [The Status of the P Versus NP Problem](paper/PvsNP/pvsnp.md)

@@ -21,7 +21,7 @@
 
 #### [390. 消除游戏](https://leetcode.cn/problems/elimination-game/description/)
 
-每次都将整数列表进行间隔删除，因此每次删除后剩余的整数列表都是等差数列。如果k是偶数，则从左向右删除；如果k是奇数，则从右向左删除。当等差数列只剩一个元素，返回队首元素。
+每次都将整数列表进行间隔删除，因此每次删除后剩余的整数列表都是等差数列。如果 k 是偶数，则从左向右删除；如果 k 是奇数，则从右向左删除。当等差数列只剩一个元素，返回队首元素。
 
 ## 查找
 
@@ -33,7 +33,7 @@
 
 #### [162. 寻找峰值](https://leetcode.cn/problems/find-peak-element/description/)
 
-用类二分查找，若nums[mid] > nums[mid + 1]，说明峰值在mid左边，令high = mid；若nums[mid] < nums[mid + 1]，说明峰值在mid右边，令low = mid + 1。循环结束返回high。
+用类二分查找，若 nums[mid] > nums[mid + 1]，说明峰值在 mid 左边，令 high = mid；若 nums[mid] < nums[mid + 1]，说明峰值在 mid 右边，令 low = mid + 1。循环结束返回 high。
 
 ## 滑动窗口
 
@@ -85,7 +85,7 @@
 
 #### [416. 分割等和子集](https://leetcode.cn/problems/partition-equal-subset-sum/description/)
 
-创建二维数组dp包含n 行target+1 列，其中`dp[i][j]` 表示从数组的[0,i]下标范围内选取若干个正整数（可以是0个），是否存在一种选取方案使得被选取的正整数的和等于j。遍历更新数组，返回`dp[n-1][target]`。
+创建二维数组 dp 包含 n 行 target+1 列，其中`dp[i][j]` 表示从数组的[0,i]下标范围内选取若干个正整数（可以是 0 个），是否存在一种选取方案使得被选取的正整数的和等于 j。遍历更新数组，返回`dp[n-1][target]`。
 
 #### [413. 等差数列划分](https://leetcode.cn/problems/arithmetic-slices/description/)
 
@@ -93,9 +93,9 @@
 
 ### 二进制表示
 
-#### [231. 2的幂](https://leetcode.cn/problems/power-of-two/description/)
+#### [231. 2 的幂](https://leetcode.cn/problems/power-of-two/description/)
 
-一个数n是2的幂，当且仅当n是正整数，并且n的二进制表示中仅包含 1个1。可以使用两种技巧：
+一个数 n 是 2 的幂，当且仅当 n 是正整数，并且 n 的二进制表示中仅包含 1 个 1。可以使用两种技巧：
 
-1. `n & (n - 1)`该位运算技巧可以直接将n二进制表示的最低位的1移除。只需判断`n & (n - 1) = 0`。
-2. `n & (-n)`该位运算技巧可以直接获取n二进制表示的最低位的1。只需判断`n & (-n) = n`。
+1. `n & (n - 1)`该位运算技巧可以直接将 n 二进制表示的最低位的 1 移除。只需判断`n & (n - 1) = 0`。
+2. `n & (-n)`该位运算技巧可以直接获取 n 二进制表示的最低位的 1。只需判断`n & (-n) = n`。
