@@ -32,6 +32,8 @@
 
 [Efective Modern C++](Effective/modern.md)
 
+[CUDA C 权威编程指南](CUDA/cuda.md)
+
 ## 论文阅读
 
 [The Google File System](paper/GFS/gfs.md)

@@ -664,8 +664,8 @@ wsl --import Ubuntu D:\Linux\Ubuntu\ D:\Linux\Ubuntu\Ubuntu.tar --version 2
 ubuntu.exe config --default-user niwenjin
 ```
 
-### 设置免sudo密码
+### 设置免 sudo 密码
 
-`sudo visudo`打开sudo文件
+`sudo visudo`打开 sudo 文件
 
 在底下添加一行`niwenjin ALL=(ALL) NOPASSWD:ALL`
