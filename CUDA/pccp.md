@@ -3,14 +3,14 @@
 ## 目录
 
 [第 1 章 基于 CUDA 的异构并行计算](#第-1-章-基于-cuda-的异构并行计算)  
-[第 2 章 CUDA 编程模型](#第-2-章-cuda编程模型)  
-[第 3 章 CUDA 执行模型](#第-3-章-cuda执行模型)  
+[第 2 章 CUDA 编程模型](#第-2-章-cuda-编程模型)  
+[第 3 章 CUDA 执行模型](#第-3-章-cuda-执行模型)  
 [第 4 章 全局内存](#第-4-章-全局内存)  
 [第 5 章 共享内存和常量内存](#第-5-章-共享内存和常量内存)  
 [第 6 章 流和并发](#第-6-章-流和并发)  
 [第 7 章 调整指令级原语](#第-7-章-调整指令级原语)  
-[第 8 章 GPU 加速库和 OpenACC](#第-8-章-gpu加速库和openacc)  
-[第 9 章 多 GPU 编程](#第-9-章-多gpu编程)  
+[第 8 章 GPU 加速库和 OpenACC](#第-8-章-gpu-加速库和-openacc)  
+[第 9 章 多 GPU 编程](#第-9-章-多-gpu-编程)  
 [第 10 章 程序实现的注意事项](#第-10-章-程序实现的注意事项)
 
 ## 第 1 章 基于 CUDA 的异构并行计算
@@ -520,6 +520,247 @@ $$
 $$
 
 ## 第 5 章 共享内存和常量内存
+
+GPU 内存按照类型（物理上的位置）可以分为：
+
+- 板载内存：容量大，延迟高，如全局内存；
+- 片上内存：容量小，延迟低，带宽高，如共享内存
+
+### 共享内存
+
+共享内存（shared memory，SMEM）是 GPU 的一个关键部件。物理上，每个 SM 都有一个小的低延迟内存池，这个内存池被当前正在该 SM 上执行的线程块中的所有线程所共享。
+
+![5-1](img/5-1.png)
+
+共享内存是一种可编程的缓存，通常的用途有：
+
+1. 块内线程通信的通道；
+2. 用于全局内存数据的可编程管理的缓存；
+3. 高速暂存存储器，用于转换数据来优化全局内存访问模式。
+
+#### 动态内存分配
+
+通过关键词`__shared__`声明共享内存：
+
+```cuda
+// 静态声明，size_x和size_y必须是编译时已确定的常量
+__shared__ float array[size_x][size_y];
+
+// 动态声明
+extern __shared__ int array[];
+// 在核函数启动时添需要加第三个参数，表示共享内存分配的空间
+kernel<<<grid, block, size>>>(...);
+```
+
+#### 共享内存存储体和访问模式
+
+共享内存具有一维的地址空间，并分为 32 个同样大小的内存模型，称为**存储体**。32 个存储体对应一个线程束中的 32 个线程，这些线程如果访问不同存储体（无冲突），那么在一个内存事务内就能够完成；否则（有冲突）需要多个内存事务，导致带宽利用率降低。
+
+线程束访问共享内存的时候有下面 3 种经典模式：
+
+1. 并行访问：多线程访问多存储体，无冲突或部分冲突，效率最高。
+2. 串行访问：多线程访问同一存储体的不同地址，完全冲突，效率最低。
+3. 广播访问：多线程访问单一地址，无冲突，一个线程得到该地址的数据后广播给其他线程，延迟低但是带宽小。
+
+![5-6](img/5-6.png)
+
+_注：多个线程访问同一列（同一存储体）的不同地址会造成冲突。_
+
+存储体冲突会严重影响共享内存的效率，当遇到严重冲突的情况下，可以使用填充的办法让数据错位，来降低冲突。
+
+例如，把声明`__shared__ int a[5][4];`改成`__shared__ int a[5][5];`：
+
+![5-12](img/5-11.png)
+
+因为存储体一共就 4 个，每一行有 5 个元素，所以有一个元素进入存储体的下一行。这样，所有元素都错开了，就不会出现冲突。
+
+![5-13](img/5-12.png)
+
+_注意：共享内存声明时，就决定了每个地址所在的存储体。想要调整每个地址对应的存储体，就要扩大声明的共享内存的大小。_
+
+存储体大小配置：
+
+```c
+// 查询存储体配置
+cudaError_t cudaDeviceGetSharedMemConfig(cudaSharedMemConfig * pConfig);
+/**
+* 返回存储体配置pConfig
+* cudaSharedMemBankSizeFourByte
+* cudaSharedMemBankSizeEightByte
+*/
+
+// 在可配置的设备上，用以下函数来配置新的存储体大小：
+cudaError_t cudaDeviceSetShareMemConfig(cudaSharedMemConfig config);
+/**
+* config选项
+* cudaSharedMemBankSizeDefault
+* cudaSharedMemBankSizeFourByte
+* cudaSharedMemBankSizeEightByte
+*/
+```
+
+#### 配置共享内存
+
+每个 SM 上有 64KB 的片上内存，共享内存和 L1 共享这 64KB，并且可以配置。CUDA 为配置一级缓存和共享内存提供以下两种方法：
+
+1. 按设备进行配置
+2. 按核函数进行配置
+
+配置函数：
+
+```c
+// 按设备进行配置
+cudaError_t cudaDeviceSetCacheConfig(cudaFuncCache cacheConfig);
+/**
+* 配置参数如下：
+* cudaFuncCachePreferNone: no preference(default)
+* cudaFuncCachePreferShared: prefer 48KB shared memory and 16 KB L1 cache
+* cudaFuncCachePreferL1: prefer 48KB L1 cache and 16 KB shared memory
+* cudaFuncCachePreferEqual: prefer 32KB L1 cache and 32 KB shared memory
+*/
+
+// 按核函数进行配置
+cudaError_t cudaFuncSetCacheConfig(const void* func, enum cudaFuncCacheca cheConfig);
+```
+
+#### 同步
+
+同步是并行的重要机制，其主要目的就是防止冲突。同步的基本方法：
+
+1. 障碍：所有调用线程等待其余调用线程达到障碍点。
+2. 内存栅栏：所有调用线程必须等到全部内存修改对其余线程可见时才继续进行。
+
+**弱排序内存模型**：CUDA 采用宽松的内存模型，也就是内存访问不一定按照他们在程序中出现的位置进行的。宽松的内存模型，导致了更激进的编译器。
+
+> GPU 线程在不同的内存，比如 SMEM，全局内存，锁页内存或对等设备内存中，写入数据的顺序是不一定和这些数据在源代码中访问的顺序相同，当一个线程的写入顺序对其他线程可见的时候，他可能和写操作被执行的实际顺序不一致。  
+> 指令之间相互独立，线程从不同内存中读取数据的顺序和读指令在程序中的顺序不一定相同。
+
+**显式障碍**：CUDA 中，障碍点设置在核函数中，注意这个指令只能在核函数中调用，并只对同一线程块内线程有效。
+
+```c
+void __syncthreads();
+```
+
+1. \_\_syncthreads()作为一个障碍点，他保证在同一线程块内所有线程没到达此障碍点时，不能继续向下执行。
+2. 同一线程块内此障碍点之前的所有全局内存，共享内存操作，对后面的线程都是可见的。
+3. 能解决同一线程块内，内存竞争和同步的问题。
+4. 避免死锁情况出现。
+5. 只能解决一个块内的线程同步。
+
+**内存栅栏**：内存栅栏能保证栅栏前的内核内存写操作对栅栏后的其他线程都是可见的。有以下三种栅栏：块，网格，系统。
+
+1. 线程块级：`void __threadfence_block();`保证同一块中的其他线程对于栅栏前的内存写操作可见；
+2. 网格级：`void __threadfence();`挂起调用线程，直到全局内存中所有写操作对相同的网格内的所有线程可见；
+3. 系统级：`void __threadfence_system();`挂起调用线程，以保证该线程对全局内存，锁页主机内存和其他设备内存中的所有写操作对全部设备中的线程和主机线程可见。
+
+**Volatile 修饰符**：volatile 声明一个变量，防止编译器优化。防止这个变量存入缓存时被其他线程改写，造成内存缓存不一致的错误，所以 volatile 声明的变量始终在全局内存中。
+
+### 常量内存
+
+常量内存是专用内存，他用于只读数据和线程束统一访问某一个数据。常量内存对内核代码而言是只读的，但是对于主机是可以读写的。常量内存并不是在片上的，而是在 DRAM 上，但其有在片上对应的缓存。其片上缓存就和一级缓存和共享内存一样，有较低的延迟，但是容量比较小，每个 SM 常量缓存大小限制为 64KB。
+
+_对于所有的片上内存，是不能通过主机赋值的，只能对 DRAM 上内存进行赋值。_
+
+常量内存的声明方式：
+
+```cuda
+__constant
+```
+
+常量内存变量的生存周期与应用程序生存周期相同，常量内存对所有网格可以访问，运行时对主机可见，当 CUDA 独立编译被使用。
+
+常量内存的初始化：
+
+```c
+cudaError_t cudaMemcpyToSymbol(const void *symbol, const void * src,  size_t count, size_t offset, cudaMemcpyKind kind);
+```
+
+#### 最优访问模式
+
+每种内存访问都有最优与最坏的访问方式，主要原因是内存的硬件结构和底层设计。比如全局内存按照连续对去访问最优，交叉访问最差；共享内存无冲突最优，全部冲突最差；而常量内存的最优访问模式是**线程束内所有线程访问一个地址**。
+
+### 只读缓存
+
+只读缓存拥有从全局内存读取数据的专用带宽，对于分散访问性能更优。只读缓存的粒度为 32 字节。实现只读缓存可以使用两种方法：
+
+1. 使用\_\_ldg 函数（推荐）
+2. 全局内存的限定指针
+
+使用\_\_ldg()的方法：
+
+```c
+__global__ void kernel(float* output, float* input) {
+    ...
+    output[idx] += __ldg(&input[idx]);
+    ...
+}
+```
+
+使用限定指针的方法：
+
+```c
+void kernel(float* output, const float* __restrict__ input) {
+    ...
+    output[idx] += input[idx];
+}
+```
+
+### 线程束洗牌指令
+
+洗牌指令（shuffle instruction）允许同一线程束内的不同线程相互访问对方的寄存器。线程束洗牌指令是线程束内线程通讯的极佳方式。
+
+束内线程的 ID 在线程束内唯一，可以利用`threadIdx`计算:
+
+```c
+unsigned int LaneID = threadIdx.x%32;
+unsigned int warpID = threadIdx.x/32;
+```
+
+线程束洗牌指令有两组：一组用于整形变量，另一种用于浮点型变量。一共有四种形式的洗牌指令。
+
+1. 在线程束内广播变量：
+
+```c
+// 将某个线程寄存器上的整型变量广播给线程束内所有线程
+int __shfl(int var, int srcLane, int width=warpSize);
+/**
+* var为变量名
+* srcLane为相对线程位置
+* width默认为32
+* 即将线程束内相对位置为srcLane的线程拥有的var变量广播给束内所有线程
+*/
+```
+
+![5-20](img/5-20.png)
+
+2. 在线程束内逐个交换变量：
+
+```c
+// 得到当前束内线程编号减去delta的编号的线程内的var值
+int __shfl_up(int var, unsigned int delta, int with=warpSize);
+```
+
+![up](img/_shfl_up.png)
+
+_最左边两个元素没有前面的delta号线程，保持原值_
+
+```c
+// 得到当前束内线程编号加上delta的编号的线程内的var值
+int __shfl_down(int var, unsigned int delta, int with=warpSize);
+```
+
+![down](img/_shfl_down.png)
+
+3. 异或索引交换变量：
+
+```c
+// 用laneMask与当前线程索引进行异或操作得到目标线程，获取目标线程的var变量
+int __shfl_xor(int var, int laneMask, int with=warpSize);
+```
+
+![xor](img/_shfl_xor.png)
+
+对应的浮点型操作函数名相同，函数重载了float类型。
 
 ## 第 6 章 流和并发
 
