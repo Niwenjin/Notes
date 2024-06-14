@@ -984,7 +984,19 @@ cudaError_t cudaEventCreateWithFlags(cudaEvent_t* event, unsigned int flags);
 
 #### 流回调
 
+流函数有特殊的参数规格，必须写成下面形式参数的函数：
 
+```c
+void CUDART_CB my_callback(cudaStream_t stream, cudaError_t status, void *data) {
+    printf("callback from stream %d\n", *((int *)data));
+}
+```
+
+实现后加入流中，当其前面的任务都完成了，就会调用上述回调函数。将流函数加入流的方法如下：
+
+```c
+cudaError_t cudaStreamAddCallback(cudaStream_t stream,cudaStreamCallback_t callback, void *userData, unsigned int flags);
+```
 
 ## 第 7 章 调整指令级原语
 
