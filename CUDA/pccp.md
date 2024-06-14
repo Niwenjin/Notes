@@ -339,12 +339,12 @@ GPU 上最大的内存空间，延迟最高，使用最常见的内存，一般�
 
 | 存储器 | 片上/片外 | 缓存       | 存取 | 范围            | 生命周期 |
 | ------ | --------- | ---------- | ---- | --------------- | -------- |
-| 寄存器 | 片上      | n/a        | R/W  | 一个线程        | 线程     |
+| 寄存器 | 片上      | 无         | R/W  | 一个线程        | 线程     |
 | 本地   | 片外      | 1.0 以上有 | R/W  | 一个线程        | 线程     |
-| 共享   | 片上      | n/a        | R/W  | 块内所有线程    | 块       |
+| 共享   | 片上      | 无         | R/W  | 块内所有线程    | 块       |
 | 全局   | 片外      | 1.0 以上有 | R/W  | 所有线程 + 主机 | 主机配置 |
-| 常量   | 片外      | Yes        | R    | 所有线程 + 主机 | 主机配置 |
-| 纹理   | 片外      | Yes        | R    | 所有线程 + 主机 | 主机配置 |
+| 常量   | 片外      | 有         | R    | 所有线程 + 主机 | 主机配置 |
+| 纹理   | 片外      | 有         | R    | 所有线程 + 主机 | 主机配置 |
 
 #### 静态全局内存
 
@@ -742,7 +742,7 @@ int __shfl_up(int var, unsigned int delta, int with=warpSize);
 
 ![up](img/_shfl_up.png)
 
-_最左边两个元素没有前面的delta号线程，保持原值_
+_最左边两个元素没有前面的 delta 号线程，保持原值_
 
 ```c
 // 得到当前束内线程编号加上delta的编号的线程内的var值
@@ -760,9 +760,214 @@ int __shfl_xor(int var, int laneMask, int with=warpSize);
 
 ![xor](img/_shfl_xor.png)
 
-对应的浮点型操作函数名相同，函数重载了float类型。
+对应的浮点型操作函数名相同，函数重载了 float 类型。
 
 ## 第 6 章 流和并发
+
+### 流和事件概述
+
+CUDA 的 API 也分为同步和异步的两种：
+
+1. 同步行为的函数会阻塞主机端线程直到其完成；
+2. 异步行为的函数在调用后会立刻把控制权返还给主机。
+
+流能封装异步操作，并保持操作顺序，允许操作在流中排队。可以被封装进流的异步操作基本可以分为以下三种：
+
+1. 主机与设备间的数据传输
+2. 核函数启动
+3. 其他的由主机发出的设备执行的命令
+
+流在 CUDA 的 API 调用可以实现流水线和双缓冲技术。
+
+### CUDA 流
+
+所有 CUDA 操作都是在流中进行的，流分为：
+
+1. 隐式声明的流，称为空流（默认）：无法管理。
+2. 显式声明的流，称为非空流：可控制流。
+
+基于流的异步内核启动和数据传输支持以下类型的粗粒度并发：
+
+- 重叠主机和设备计算
+- 重叠主机计算和主机设备数据传输
+- 重叠主机设备数据传输和设备计算
+- 并发设备计算（多个设备）
+
+![6-1](img/6-1.png)
+
+_在多个流中执行不同的数据传输和核函数，所有传输和核启动都是并发的。_
+
+#### 流操作函数
+
+流的声明：
+
+```c
+cudaStream_t myStream;
+```
+
+声明之后，需要为流分配资源：
+
+```c
+cudaError_t cudaStreamCreate(cudaStream_t* pStream);
+```
+
+在流中进行异步内存操作：
+
+```c
+cudaError_t cudaMemcpyAsync(void* dst, const void* src, size_t count, cudaMemcpyKind kind, cudaStream_t stream = 0);
+```
+
+在非空流中执行内核需要在启动核函数的时候加入一个附加的启动配置：
+
+```c
+kernel_name<<<grid, block, sharedMemSize, myStream>>>(argument list);
+```
+
+流操作结束后，需要回收资源：
+
+```c
+// 这条指令会等待流执行完毕后回收资源
+cudaError_t cudaStreamDestroy(cudaStream_t stream);
+```
+
+流同步命令：
+
+```c
+// 阻塞主机，直到流完成
+cudaError_t cudaStreamSynchronize(cudaStream_t stream);
+
+// 立即返回，若查询的流执行完，返回cudaSuccess；否则，返回cudaErrorNotReady
+cudaError_t cudaStreamQuery(cudaStream_t stream);
+```
+
+#### 流调度
+
+理想状态下，所有流都是同时执行的。但是实际执行中，由于硬件资源有限，无法提供所有流同时执行的资源。
+
+![6-3](img/6-3.png)
+
+利用 Hyper-Q 技术产生多个工作队列，每个队列执行一个流，就可以实现所有流的并发。
+
+可以控制流的优先级（数字小的优先级高）。优先级只影响核函数，不影响数据传输，高优先级的流可以占用低优先级的工作。
+
+```c
+// 创建具有指定优先级的流
+cudaError_t cudaStreamCreateWithPriority(cudaStream_t* pStream, unsigned int flags,int priority);
+```
+
+不同设备具有不同优先级，通过以下函数查询优先级：
+
+```c
+cudaError_t cudaDeviceGetStreamPriorityRange(int *leastPriority, int *greatestPriority);
+/**
+* leastPriority表示最低优先级（整数，远离0）
+* greatestPriority表示最高优先级（整数，数字较接近0）
+* 如果设备不支持优先级，返回0
+*/
+```
+
+#### CUDA 事件
+
+事件的本质就是一个标记，它与其所在的流内的特定点相关联。流中的任意点都可以通过 API 插入事件以及查询事件完成的函数，只有事件所在流中其之前的操作都完成后才能触发事件完成。可以使用事件来执行以下两个基本任务：
+
+1. 同步流执行
+2. 监控设备的进展
+
+事件的创建和销毁：
+
+```c
+// 声明一个事件
+cudaEvent_t event;
+// 初始化事件（分配资源）
+cudaError_t cudaEventCreate(cudaEvent_t* event);
+// 销毁事件
+cudaError_t cudaEventDestroy(cudaEvent_t event);
+// 回收指令会立即返回，资源直到事件完成后才被回收。
+```
+
+事件与流交互：
+
+```c
+// 将事件添加到流
+cudaError_t cudaEventRecord(cudaEvent_t event, cudaStream_t stream = 0);
+// 阻塞等待前面的操作完成
+cudaError_t cudaEventSynchronize(cudaEvent_t event);
+// 检测操作是否完成
+cudaError_t cudaEventQuery(cudaEvent_t event);
+// 记录两个事件的时间间隔
+cudaError_t cudaEventElapsedTime(float* ms, cudaEvent_t start, cudaEvent_t stop);
+/**
+* 注意：
+* cudaEventRecord是异步的，插入时间不可控
+* 因此检测的时间间隔不代表两个事件之间代码的执行时间
+*/
+```
+
+#### 流同步
+
+没有显式声明的流式默认同步流，程序员声明的流都是异步流。异步流通常不会阻塞主机；同步流中部分操作会造成阻塞。非空流并不都是非阻塞的，其也可以分为两种类型：
+
+* 阻塞流：会被空流的阻塞行为阻塞
+* 非阻塞流：空流的阻塞行为失效
+
+`cudaStreamCreate`默认创建的是阻塞流，想要创建非阻塞流需要
+
+```c
+cudaError_t cudaStreamCreateWithFlags(cudaStream_t* pStream, unsigned int flags);
+/**
+* cudaStreamDefault;  // 默认阻塞流
+* cudaStreamNonBlocking;  //非阻塞流
+*/
+```
+
+#### 隐式同步
+
+隐式操作常出现在内存操作上，比如：
+
+* 锁页主机内存分布
+* 设备内存分配
+* 设备内存初始化
+* 同一设备两地址之间的内存复制
+* 一级缓存，共享内存配置修改
+
+#### 显式同步
+
+常见的显式同步有：
+
+* 同步设备
+* 同步流
+* 同步流中的事件
+* 使用事件跨流同步
+
+下面的函数就可以阻塞主机线程，直到设备完成所有操作：
+
+```c
+cudaError_t cudaDeviceSynchronize(void);
+```
+
+流同步函数：
+
+```c
+// 阻塞主机直到完成
+cudaError_t cudaStreamSynchronize(cudaStream_t stream);
+// 非阻塞检测流是否完成
+cudaError_t cudaStreamQuery(cudaStream_t stream);
+```
+
+事件同步：
+
+```c
+// 阻塞等待事件
+cudaError_t cudaEventSynchronize(cudaEvent_t event);
+// 非阻塞检查事件
+cudaError_t cudaEventQuery(cudaEvent_t event);
+// 指定的流要等待指定的事件
+cudaError_t cudaStreamWaitEvent(cudaStream_t stream, cudaEvent_t event);
+/**
+* 事件可以在这个流中，也可以不在
+* 当事件不在流中时，就实现了跨流同步
+*/
+```
 
 ## 第 7 章 调整指令级原语
 

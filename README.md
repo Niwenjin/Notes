@@ -14,6 +14,8 @@
 
 [Latex](Latex/latex.md)
 
+[CUDA](CUDA/cuda.md)
+
 ## 读书笔记
 
 [C++ Primer](C++Primer/C++Primer.md)
@@ -32,7 +34,11 @@
 
 [Efective Modern C++](Effective/modern.md)
 
-[CUDA C 权威编程指南](CUDA/cuda.md)
+[深入理解计算机系统](CSAPP/csapp.md)
+
+[CUDA C 权威编程指南](CUDA/pccp.md)
+
+[CUDA 并行程序设计-GPU 编程指南](CUDA/programming.md)
 
 ## 论文阅读
 
