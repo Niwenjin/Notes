@@ -969,6 +969,23 @@ cudaError_t cudaStreamWaitEvent(cudaStream_t stream, cudaEvent_t event);
 */
 ```
 
+可配置事件：CDUA提供了一种控制事件行为和性能的函数：
+
+```c
+cudaError_t cudaEventCreateWithFlags(cudaEvent_t* event, unsigned int flags);
+/**
+* flags为：
+* cudaEventDefault
+* cudaEventBlockingSync  // 使用cudaEventSynchronize同步会造成阻塞调用线程
+* cudaEventDisableTiming  // 表示事件不用于计时
+* cudaEventInterprocess  // 表示可能被用于进程之间的事件
+*/
+```
+
+#### 流回调
+
+
+
 ## 第 7 章 调整指令级原语
 
 ## 第 8 章 GPU 加速库和 OpenACC
