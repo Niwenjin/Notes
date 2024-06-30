@@ -9,6 +9,8 @@
 [建造者模式](#建造者模式)  
 [原型模式](#原型模式)  
 **结构型模式**  
+[适配器模式](#适配器模式)  
+[桥接模式](#桥接模式)  
 **行为模式**  
 [观察者模式](#观察者模式)
 
@@ -508,6 +510,50 @@ class ShapeType
 
 ### 适配器模式
 
+适配器模式用于将已有接口转换为调用者所期望的另一种接口，让特定的 API 接口可以适配多种场景。
+
+主要组件：
+
+1. 目标接口(Target)：提供给外部程序的统一接口，是外部调用者(client)期望使用的接口。
+2. 源接口(Adaptee)：已经具备一定的功能，但是与 Target 不兼容的接口。它包含了 client 所需要的功能，但是不能被 client 所使用。
+3. 适配器(Adapter)：对源接口进行适配，使得源接口可以像目标接口一样被公共调用的类。该类提供了 Target 的接口实现，并通过继承或组合的方式调用了 Adaptee 的接口。
+
+适配器的分类：
+
+1. 类适配器：同时继承了目标接口和源接口，从而使得源接口的函数可以被目标接口所调用。
+2. 对象适配器：以对象组合的方式适配不兼容的源接口。所谓的对象组合，是指在一个对象内部调用另一个对象的成员函数。
+
+代码实现（对象适配器）：
+
+```cpp
+class Target
+{
+  public:
+    virtual void request() = 0;
+};
+
+class Adaptee
+{
+  public:
+    void specificRequest()
+    {
+        std::cout << "Adaptee specific request" << std::endl;
+    }
+};
+
+class Adapter : public Target
+{
+  public:
+    Adapter(Adaptee* adaptee) : m_adaptee(adaptee) {}
+    void request() override
+    {
+        m_adaptee->specificRequest();
+    }
+  private:
+    Adaptee* m_adaptee;
+};
+```
+
 ### 装饰器模式
 
 ### 代理模式
@@ -516,7 +562,73 @@ class ShapeType
 
 ### 桥接模式
 
+桥接模式的核心思想是分离抽象和实现。通过提供一个桥接结构，使得抽象层和实现层不直接交互，而是通过桥接接口来进行通信，从而实现解耦。
+
+主要组件：
+
+1. 抽象接口；
+2. 具体实现。
+
+代码实现：
+
+```cpp
+// Implementor
+class Device {
+  public:
+    virtual bool isEnabled() = 0;
+    virtual void enable() = 0;
+    virtual void disable() = 0;
+    virtual ~Device() {}
+};
+
+// Concrete Implementor 1
+class TV : public Device {
+    bool on = false;
+  public:
+    bool isEnabled() override {
+        return on;
+    }
+
+    void enable() override {
+        on = true;
+        std::cout << "TV is turned on.\n";
+    }
+
+    void disable() override {
+        on = false;
+        std::cout << "TV is turned off.\n";
+    }
+};
+
+// Concrete Implementor 2
+class Radio : public Device {
+    bool on = false;
+  public:
+    bool isEnabled() override {
+        return on;
+    }
+
+    void enable() override {
+        on = true;
+        std::cout << "Radio is turned on.\n";
+    }
+
+    void disable() override {
+        on = false;
+        std::cout << "Radio is turned off.\n";
+    }
+};
+```
+
 ### 组合模式
+
+它将对象组合成树状结构来表示“部分-整体”的层次关系。
+
+主要组件：
+
+1. 组件（Component）：组合模式的“根节点”，定义组合中所有对象的通用接口，可以是抽象类或接口。该类中定义了子类的共性内容。
+2. 叶子（Leaf）：实现了 Component 接口的叶子节点，表示组合中的叶子对象。
+3. 合成（Composite）：作用是存储子部件，并且在 Composite 中实现了对子部件的相关操作，⽐如添加、删除、获取子组件等。
 
 ### 享元模式
 
