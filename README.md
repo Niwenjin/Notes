@@ -14,7 +14,13 @@
 
 [Latex](Latex/latex.md)
 
-[CUDA](CUDA/cuda.md)
+[Python](Python/python.md)
+
+[计算机视觉](CV/cv.md)
+
+[RK3588s开发板](RK3588/rk3588.md)
+
+[UWB开发套件](UWB/uwb.md)
 
 ## 读书笔记
 
@@ -37,8 +43,6 @@
 [深入理解计算机系统](CSAPP/csapp.md)
 
 [CUDA C 权威编程指南](CUDA/pccp.md)
-
-[CUDA 并行程序设计-GPU 编程指南](CUDA/programming.md)
 
 ## 论文阅读
 
