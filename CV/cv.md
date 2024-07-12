@@ -891,6 +891,15 @@ WGAN：采用 Wasserstein 距离替代 JS 散度，解决了传统 GAN 中梯度
 
 ### Assignment 1
 
+K-近邻（kNN）算法
+
+用kNN分类器对测试数据进行分类：
+
+1. 计算所有测试样本和所有训练样本之间的距离；
+2. 对于每个测试样本，我们找到k个最接近的样本，并让它们为标签投票。
+
+
+
 ### Assignment 2
 
 ### Assignment 3
