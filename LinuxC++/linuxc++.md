@@ -727,6 +727,10 @@ wsl --import Ubuntu D:\Linux\Ubuntu\ D:\Linux\Ubuntu\Ubuntu.tar --version 2
 # 修改默认用户
 # 如 Ubuntu-22.04 的可执行文件名为 Ubuntu2204.exe
 ubuntu.exe config --default-user niwenjin
+
+# 若没有对应可执行程序，在/etc/wsl.conf文件中添加：
+[user]
+default = niwenjin
 ```
 
 ### 设置免 sudo 密码
