@@ -595,6 +595,16 @@ else:
 
 用 break 退出循环，用 continue 跳到下一步循环，用 pass 占位。
 
+enumerate 用于将一个可遍历的数据对象（如列表、元组或字符串）组合为一个索引序列，同时列出数据和数据下标。
+
+```py
+classes = ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+for y, cls in enumerate(classes):
+    # y表示下标（默认从0开始，需要从其他数开始可以设置start参数）
+    # cls表示遍历的元素
+    ...
+```
+
 ### 函数
 
 定义一个由自己想要功能的函数，以下是简单的规则：
@@ -1238,7 +1248,7 @@ plot([x], y, [fmt], [x2], y2, [fmt2], ..., **kwargs)
 
 **标记字符**：'.' 点标记，',' 像素标记(极小点)，'o' 实心圈标记，'v' 倒三角标记，'^' 上三角标记，'>' 右三角标记，'<' 左三角标记...等等。
 
-使用Pycharm或Jupyter Notebook时图像会交互式显示，其他时候需要调用 plt.show() 显示图像：
+使用 Pycharm 或 Jupyter Notebook 时图像会交互式显示，其他时候需要调用 plt.show() 显示图像：
 
 ```py
 import matplotlib.pyplot as plt

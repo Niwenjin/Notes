@@ -20,8 +20,6 @@
 
 [RK3588s开发板](RK3588/rk3588.md)
 
-[UWB开发套件](UWB/uwb.md)
-
 ## 读书笔记
 
 [C++ Primer](C++Primer/C++Primer.md)
@@ -45,6 +43,8 @@
 [CUDA C 权威编程指南](CUDA/pccp.md)
 
 [TCP/IP详解 卷1：协议](Tcpip/tcpip.md)
+
+[动手学深度学习（PyTorch版）](Pytorch/pytorch.md)
 
 ## 论文阅读
 
