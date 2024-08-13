@@ -1128,6 +1128,17 @@ Softmax 函数能将一组评分归一化为一组概率，定义为：$softmax(
 
 损失函数为：$L=\frac{1}{N}\sum_i -\log(\frac{e^{s_{y_i}}}{\sum_j e^{s_j}})+R(W)$
 
+其中，$L_i=-\log(\frac{e^{s_{y_i}}}{\sum_j e^{s_j}})=-S_{y_i}+\log \sum_j e^{s_j}$
+
+$\frac{\partial L_i}{\partial S_j}(j\neq y_i)=\frac{e^{s_j}}{\sum_j e^{s_j}}=p_j$
+
+$$
+\frac{\partial L_i}{\partial W_j}=\begin{cases}
+p_j * X_i,& j\neq y_i\\
+(p_j - 1)* X_i,& j=y_i
+\end{cases}
+$$
+
 Softmax 损失和解析梯度计算：
 
 ```py
@@ -1337,6 +1348,98 @@ class TwoLayerNet(object):
         return loss, grads
 ```
 
+**提取特征**
+
+方向梯度直方图（HOG）捕捉图像的纹理，同时忽略颜色信息；颜色直方图（HSV）代表输入图像的颜色，同时忽略纹理。将二者结合提取图像的特征，从而提升训练的效果。
+
+HOG 特征的计算过程：
+
+1. 图像预处理；
+2. 计算 x 和 y 方向上的梯度；
+3. 将梯度转化为方向$\arctan \frac{dy}{dx}$和变化速度$\sqrt{{dx}^2+{dy}^2}$；
+4. 构建桶数为 9 的梯度方向直方图，并进行均值滤波；
+5. 将三维的直方图展开为一维数组，作为 HOG 特征向量返回。
+
+HSV 特征的计算过程：
+
+1. 图像预处理；
+2. 将图像转换为 HSV 颜色空间；
+3. 构建颜色直方图；
+4. 返回颜色特征向量。
+
 ### Assignment 2
+
+**优化随机梯度下降算法**
+
+SGD
+
+```py
+# learning_rate（lr）为超参数
+w += - lr * dw
+```
+
+SGD + Momentum
+
+```py
+# momentum（mu）为超参数
+v = mu * v - lr * dw
+w += v
+```
+
+RMSprop
+
+```py
+# lr, decay_rate, epsilon（eps）为超参数
+cache = decay_rate * cache + (1 - decay_rate) * dx**2
+x += - learning_rate * dx / (np.sqrt(cache) + eps)
+```
+
+Adam
+
+```py
+# t为循环下降轮次
+# lr, eps, beta1, beta2为超参数
+m = beta1*m + (1-beta1)*dx
+mt = m / (1-beta1**t)
+v = beta2*v + (1-beta2)*(dx**2)
+vt = v / (1-beta2**t)
+x += - learning_rate * mt / (np.sqrt(vt) + eps)
+```
+
+_批归一化 Batch Normalization_
+
+批归一化方法通过将样本分布线性变换为高斯分布，加速网络的收敛过程。批归一化的计算步骤如下：
+
+1. 计算小批量样本的均值和方差  
+   $\mu_B=\frac{1}{m}\sum^m_{i=1}x_i$  
+   $\sigma^2_B=\frac{1}{m}\sum^m_{i=1}(x_i-\mu_B)^2$
+2. 归一化  
+   $\hat{x_i}=\frac{x_i-\mu_B}{\sqrt{\sigma^2_B+\epsilon}}$
+3. 缩放和平移  
+   $y_i=\gamma\hat{x_i}+\beta$
+
+计算图：
+
+<img src="img/BN.png" width=600>
+
+链式求导：
+
+$$
+\begin{align}
+
+\frac{\partial \ell}{\partial \hat{x}_i} = \frac{\partial \ell}{\partial y_i} \cdot \gamma\\
+
+\frac{\partial \ell}{\partial \sigma_B^2} = \sum_{i=1}^m \frac{\partial \ell}{\partial \hat{x}_i} \cdot(x_i - \mu_B) \cdot \left(-\frac{1}{2}\right) \cdot (\sigma_B^2 + \epsilon)^{-3/2}\\
+
+\frac{\partial \ell}{\partial \mu_B} = \left( \sum_{i=1}^m \frac{\partial \ell}{\partial \hat{x}_i} \cdot \left(\frac{-1}{\sqrt{\sigma_B^2 + \epsilon}}\right) \right) + \frac{\partial \ell}{\partial \sigma_B^2} \cdot \frac{\sum_{i=1}^m -2(x_i - \mu_B)}{m}\\
+
+\frac{\partial \ell}{\partial x_i} = \frac{\partial \ell}{\partial \hat{x}_i} \cdot \frac{1}{\sqrt{\sigma_B^2 + \epsilon}} + \frac{\partial \ell}{\partial \sigma_B^2} \cdot \frac{2(x_i - \mu_B)}{m} + \frac{\partial \ell}{\partial \mu_B} \cdot \frac{1}{m}\\
+
+\frac{\partial \ell}{\partial \gamma} = \sum_{i=1}^m \frac{\partial \ell}{\partial y_i} \cdot \hat{x}_i\\
+
+\frac{\partial \ell}{\partial \beta} = \sum_{i=1}^m \frac{\partial \ell}{\partial y_i}
+
+\end{align}
+$$
 
 ### Assignment 3
