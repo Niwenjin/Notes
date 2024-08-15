@@ -623,13 +623,13 @@ def 函数名（参数列表）:
 
 在 python 中，strings, tuples, 和 numbers 是不可更改的对象，而 list,dict 等则是可以修改的对象。
 
-- 不可变类型：变量赋值 a=5 后再赋值 a=10，这里实际是新生成一个 int 值对象 10，再让 a 指向它，而 5 被丢弃，不是改变 a 的值，相当于新生成了 a。
-- 可变类型：变量赋值 la=[1,2,3,4] 后再赋值 la[2]=5 则是将 list la 的第三个元素值更改，本身 la 没有动，只是其内部的一部分值被修改了。
+-   不可变类型：变量赋值 a=5 后再赋值 a=10，这里实际是新生成一个 int 值对象 10，再让 a 指向它，而 5 被丢弃，不是改变 a 的值，相当于新生成了 a。
+-   可变类型：变量赋值 la=[1,2,3,4] 后再赋值 la[2]=5 则是将 list la 的第三个元素值更改，本身 la 没有动，只是其内部的一部分值被修改了。
 
 python 函数的参数传递：
 
-- 不可变类型：类似 C++ 的值传递，如整数、字符串、元组。如 fun(a)，传递的只是 a 的值，没有影响 a 对象本身。如果在 fun(a) 内部修改 a 的值，则是新生成一个 a 的对象。
-- 可变类型：类似 C++ 的引用传递，如 列表，字典。如 fun(la)，则是将 la 真正的传过去，修改后 fun 外部的 la 也会受影响。
+-   不可变类型：类似 C++ 的值传递，如整数、字符串、元组。如 fun(a)，传递的只是 a 的值，没有影响 a 对象本身。如果在 fun(a) 内部修改 a 的值，则是新生成一个 a 的对象。
+-   可变类型：类似 C++ 的引用传递，如 列表，字典。如 fun(la)，则是将 la 真正的传过去，修改后 fun 外部的 la 也会受影响。
 
 _python 中一切都是对象，严格意义我们不能说值传递还是引用传递，我们应该说传不可变对象和传可变对象。_
 
@@ -637,10 +637,10 @@ _python 中一切都是对象，严格意义我们不能说值传递还是引用
 
 以下是调用函数时可使用的正式参数类型：
 
-- 必需参数
-- 关键字参数
-- 默认参数
-- 不定长参数
+-   必需参数
+-   关键字参数
+-   默认参数
+-   不定长参数
 
 必需参数须以正确的顺序传入函数。调用时的数量必须和声明时的一样。
 
@@ -942,28 +942,28 @@ print (counter.__secretCount)  # 报错，实例不能访问私有变量
 
 可以对类的专有方法进行重载，类的专有方法：
 
-- `__init__` : 构造函数，在生成对象时调用
-- `__del__` : 析构函数，释放对象时使用
-- `__repr__` : 打印，转换
-- `__setitem__` : 按照索引赋值
-- `__getitem__`: 按照索引获取值
-- `__len__`: 获得长度
-- `__cmp__`: 比较运算
-- `__call__`: 函数调用
-- `__add__`: 加运算
-- `__sub__`: 减运算
-- `__mul__`: 乘运算
-- `__truediv__`: 除运算
-- `__mod__`: 求余运算
-- `__pow__`: 乘方
+-   `__init__` : 构造函数，在生成对象时调用
+-   `__del__` : 析构函数，释放对象时使用
+-   `__repr__` : 打印，转换
+-   `__setitem__` : 按照索引赋值
+-   `__getitem__`: 按照索引获取值
+-   `__len__`: 获得长度
+-   `__cmp__`: 比较运算
+-   `__call__`: 函数调用
+-   `__add__`: 加运算
+-   `__sub__`: 减运算
+-   `__mul__`: 乘运算
+-   `__truediv__`: 除运算
+-   `__mod__`: 求余运算
+-   `__pow__`: 乘方
 
 ## Jupyter Notebook
 
 Jupyter Notebook 是集代码和可视化内容为一体的工具。
 
-- 支持多语言：支持 Python, MATLAB, R 语言等，可以导出为 Markdown, pdf 等文档。
-- 远程运行：可以通过网络链接远程服务器来实现运算。
-- 交互式展现：可以输出图片、视频、数学公式，甚至可以呈现一些互动的可视化内容。
+-   支持多语言：支持 Python, MATLAB, R 语言等，可以导出为 Markdown, pdf 等文档。
+-   远程运行：可以通过网络链接远程服务器来实现运算。
+-   交互式展现：可以输出图片、视频、数学公式，甚至可以呈现一些互动的可视化内容。
 
 ## NumPy
 
@@ -975,10 +975,10 @@ NumPy 最重要的一个特点是其 N 维数组对象 ndarray，它是一系列
 
 ndarray 内部由以下内容组成：
 
-- 一个指向数据（内存或内存映射文件中的一块数据）的指针。
-- 数据类型或 dtype，描述在数组中的固定大小值的格子。
-- 一个表示数组形状（shape）的元组，表示各维度大小的元组。
-- 一个跨度元组（stride），其中的整数指的是为了前进到当前维度下一个元素需要"跨过"的字节数。
+-   一个指向数据（内存或内存映射文件中的一块数据）的指针。
+-   数据类型或 dtype，描述在数组中的固定大小值的格子。
+-   一个表示数组形状（shape）的元组，表示各维度大小的元组。
+-   一个跨度元组（stride），其中的整数指的是为了前进到当前维度下一个元素需要"跨过"的字节数。
 
 创建一个 ndarray 只需调用 NumPy 的 array 函数即可：
 
@@ -1104,10 +1104,10 @@ x2 = x[[0, 6]] # 使用花式索引取下标为0和6的元素构成新数组
 
 当运算中的 2 个数组的形状不同时，numpy 将自动触发广播机制。广播的规则：
 
-- 让所有输入数组都向其中形状最长的数组看齐，形状中不足的部分都通过在前面加 1 补齐。
-- 输出数组的形状是输入数组形状的各个维度上的最大值。
-- 如果输入数组的某个维度和输出数组的对应维度的长度相同或者其长度为 1 时，这个数组能够用来计算，否则出错。
-- 当输入数组的某个维度的长度为 1 时，沿着此维度运算时都用此维度上的第一组值。
+-   让所有输入数组都向其中形状最长的数组看齐，形状中不足的部分都通过在前面加 1 补齐。
+-   输出数组的形状是输入数组形状的各个维度上的最大值。
+-   如果输入数组的某个维度和输出数组的对应维度的长度相同或者其长度为 1 时，这个数组能够用来计算，否则出错。
+-   当输入数组的某个维度的长度为 1 时，沿着此维度运算时都用此维度上的第一组值。
 
 ### 数组操作
 
@@ -1260,3 +1260,37 @@ ypoints = np.array([3, 8, 1, 10])
 plt.plot(xpoints, ypoints)
 plt.show()
 ```
+
+## TensorBoard
+
+TensorBoard 是一组用于数据可视化的工具。它包含在流行的开源机器学习库 Tensorflow 中，也兼容 Pytorch。
+
+在训练脚本中导入 tensorboard 并初始化实例：
+
+```py
+from torch.utils.tensorboard import SummaryWriter
+
+writer = SummaryWriter("runs/resnet18")  # 指定log的储存路径
+```
+
+要跟踪训练中的变量，需要调用`add_scalar`方法，其中第一个参数代表图表名，第二个参数代表 y 轴变量，第三个参数代表 x 轴变量：
+
+```py
+# 训练过程
+for epoch in range(num_epochs):
+    training_loss = train(model, train_loader, criterion, optimizer)
+    # train_losses.append(training_loss)
+    writer.add_scalar("Loss/Training", training_loss, epoch)  # 跟踪training_loss变量
+
+    print(f"Epoch [{epoch}/{num_epochs}], Training Loss: {training_loss:.4f}")
+
+    test_accuracy, test_loss = test(model, test_loader, criterion)
+    # test_losses.append(test_loss)
+    # test_accuracies.append(test_accuracy)
+    writer.add_scalar("Loss/Test", test_loss, epoch)  # 跟踪test_loss变量
+    writer.add_scalar("Accuracy/Test", test_accuracy, epoch)  # 跟踪test_accuracy变量
+
+    print(f"Test Accuracy: {test_accuracy:.4f}, Test Loss: {test_loss:.4f}\n")
+```
+
+运行训练脚本后，SummaryWriter 会将 log 保存到指定的目录下。要查看 log 生成的可视化曲线，运行`tensorboard --logdir=runs`（假设 log 保存目录为 runs），启动 TensorBoard 后端，此时可以通过访问`http://localhost:6006/`查看可视化内容。
