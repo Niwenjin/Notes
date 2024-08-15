@@ -2,7 +2,8 @@
 
 ## 目录
 
-[预备知识](#预备知识)
+[预备知识](#预备知识)  
+[计算机视觉](#计算机视觉)
 
 ## 预备知识
 
@@ -182,4 +183,98 @@ $$
 ```py
 y = torch.ones(4, dtype = torch.float32)
 x, y, torch.dot(x, y)
+```
+
+### 自动微分
+
+深度学习框架通过⾃动计算导数，即⾃动微分（automatic differentiation）来加快求导。实际中，根据设计好的模型，系统会构建⼀个计算图（computational graph），来跟踪计算是哪些数据通过哪些操作组合起来产⽣输出。⾃动微分使系统能够随后反向传播梯度。这⾥，反向传播（backpropagate）意味着跟踪整个计算图，填充关于每个参数的偏导数。
+
+深度学习框架可以⾃动计算导数：
+
+1. 首先将梯度附加到想要对其计算偏导数的变量上；
+2. 记录目标值的计算；
+3. （可选）清除积累的梯度；
+4. 执行目标值的反向传播函数；
+5. 访问或处理变量的梯度。
+
+
+```py
+x.requires_grad_(True) # 等价于x=torch.arange(4.0,requires_grad=True)
+
+x.grad.zero_()  # 清除积累的梯度
+y = 2 * torch.dot(x, x)
+y.backward()  # 反向传播
+x.grad
+```
+
+有时，我们希望将某些计算移动到记录的计算图之外。这⾥可以分离y来返回⼀个新变量u，该变量与y具有相同的值，但丢弃计算图中如何计算y的任何信息。换句话说，梯度不会向后流经u到x。
+
+```py
+x.grad.zero_()
+y = x * x
+u = y.detach()  # u是值为y的一个常数
+z = u * x
+z.sum().backward()
+x.grad == u
+```
+
+### 查阅文档
+
+为了知道模块中可以调⽤哪些函数和类，可以调⽤dir函数。例如，我们可以查询随机数生成模块中的所有属性：
+
+```py
+>>> import torch
+>>> dir(torch.distributions)
+```
+
+有关如何使⽤给定函数或类的更具体说明，可以调⽤help函数。
+
+```py
+>>> help(torch.ones)
+```
+
+## 计算机视觉
+
+### 图像增广
+
+大型数据集是成功应⽤深度神经⽹络的先决条件。图像增广在对训练图像进行一系列的随机变化之后，生成相似但不同的训练样本，从而扩大了训练集的规模。
+
+torchvision.transforms库用于对图像进行变换。
+
+```py
+from PIL import Image
+from torchvision import transforms
+```
+
+随机水平翻转图像通常不会改变图片的类别。
+
+```py
+transforms.RandomHorizontalFlip(p=0.5)  # 随机水平翻转图像，概率为 p
+transforms.RandomVerticalFlip(p=0.5)  # 随机垂直翻转图像，概率为 p
+transforms.RandomRotation(degrees)  # 随机旋转图像，degrees 范围内的任意角度。
+```
+
+可以对图像进行裁剪（可以配合填充），随机裁剪图像使物体以不同比例出现在图像的不同位置。这可以降低模型对目标位置的敏感性。
+
+```py
+transforms.RandomResizedCrop(size)  # 随机裁剪并调整图像到指定 size
+transforms.Resize(size)  # 调整图像大小到 size（可以是整数或元组）
+transforms.Pad(padding)  # 在图像周围填充 padding 数量的像素
+```
+
+另一种增广方法是改变颜色。们可以改变图像颜色的四个方面：亮度、对⽐度、饱和度和色调。
+
+```py
+transforms.ColorJitter(brightness, contrast, saturation, hue)  # 随机调整图像的亮度、对比度、饱和度和色调
+```
+
+多种图像增广方法通常被结合使用。transforms.Compose用于将多个变换组合成一个变换。
+
+```py
+transform = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),  # 将图像转换为深度学习框架所要求的格式
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+])
 ```
