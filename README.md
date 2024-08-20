@@ -42,9 +42,9 @@
 
 [CUDA C 权威编程指南](CUDA/pccp.md)
 
-[TCP/IP详解 卷1：协议](Tcpip/tcpip.md)
+[TCP/IP 详解 卷 1：协议](Tcpip/tcpip.md)
 
-[动手学深度学习（PyTorch版）](Pytorch/pytorch.md)
+[动手学深度学习（PyTorch 版）](Pytorch/pytorch.md)
 
 ## 论文阅读
 
@@ -52,8 +52,6 @@
 
 Ceph
 
-- [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)
-- [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
-- [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
-
-[The Status of the P Versus NP Problem](paper/PvsNP/pvsnp.md)
+-   [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)
+-   [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
+-   [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
