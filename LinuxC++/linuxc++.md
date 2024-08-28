@@ -10,7 +10,8 @@
 [gtest](#gtest)  
 [glog](#glog)  
 [VMWare](#wmware)  
-[wsl](#wsl)
+[wsl](#wsl)  
+[zsh](#zsh)
 
 ## shell 命令
 
@@ -795,3 +796,60 @@ default = niwenjin
 `sudo visudo`打开 sudo 文件
 
 在底下添加一行`niwenjin ALL=(ALL) NOPASSWD:ALL`
+
+## zsh
+
+安装并设置默认终端
+
+```sh
+sudo apt install zsh
+# 如果使用vscode集成终端，在vscode中设置
+# chsh -s /bin/zsh
+```
+
+安装oh-my-zsh
+
+[oh-my-zsh官网](http://ohmyz.sh/)
+
+使用oh-my-zsh的模板替换~/.zshrc
+
+```sh
+cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+```
+
+安装并配置powerlevel10k主题
+
+```sh
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+# 在~/.zshrc中修改
+ZSH_THEME="powerlevel10k/powerlevel10k"
+# 重启终端，会启动引导程序配置p10k
+# 或者，手动启动配置程序
+p10k configure
+```
+
+安装并配置插件
+
+插件推荐：
+
+- zsh -autosuggestions  
+  zsh-autosuggestions 是一个命令提示插件，当你输入命令时，会自动推测你可能需要输入的命令，按下右键可以快速采用建议。
+  `git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions`
+- zsh-completions
+  `git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions`
+- zsh-syntax-highlighting
+  zsh-syntax-highlighting 是一个命令语法校验插件，在输入命令的过程中，若指令不合法，则指令显示为红色，若指令合法就会显示为绿色。
+  `git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting`
+- z
+  oh-my-zsh 内置了 z 插件。z 是一个文件夹快捷跳转插件，对于曾经跳转过的目录，只需要输入最终目标文件夹名称，就可以快速跳转，避免再输入长串路径，提高切换文件夹的效率。
+- extract
+  oh-my-zsh 内置了 extract 插件。extract 用于解压任何压缩文件，不必根据压缩文件的后缀名来记忆压缩软件。使用 x 命令即可解压文件。
+- web-search
+  oh-my-zsh 内置了 web-search 插件。web-search 能让我们在命令行中使用搜索引擎进行搜索。使用搜索引擎关键字+搜索内容 即可自动打开浏览器进行搜索。
+
+启用插件
+
+```sh
+# 修改~/.zshrc
+plugins=(git zsh-autosuggestions zsh-completions zsh-syntax-highlighting z extract web-search)
+```
