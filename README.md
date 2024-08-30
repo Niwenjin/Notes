@@ -20,6 +20,8 @@
 
 [无人机](RK3588/rk3588.md)
 
+[CIFAR-10](CV/cifar-10.md)
+
 ## 读书笔记
 
 [C++ Primer](C++Primer/C++Primer.md)
@@ -45,6 +47,8 @@
 [TCP/IP 详解 卷 1：协议](Tcpip/tcpip.md)
 
 [动手学深度学习（PyTorch 版）](Pytorch/pytorch.md)
+
+[Docker — 从入门到实践](Docker/docker.md)
 
 ## 论文阅读
 
