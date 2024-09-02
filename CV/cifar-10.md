@@ -83,6 +83,17 @@ Mixup 是一种数据增强方法，它通过线性插值的方式将两幅图�
 
 引入 cutmix 和 mixup 之后，拟合难度大大提高了，减少了模型过拟合的风险。此时，在测试集上的精度达到 96.47%。{train3}
 
+<table>
+  <tr>
+    <td><img src="img/Accuracy_Test.png" alt="Accuracy_Test" width="300"></td>
+    <td><img src="img/Accuracy_Train.png" alt="Accuracy_Train" width="300"></td>
+  </tr>
+  <tr>
+    <td><img src="img/Loss_Test.png" alt="Loss_Test" width="300"></td>
+    <td><img src="img/Loss_Train.png" alt="Loss_Train" width="300"></td>
+  </tr>
+</table>
+
 ## 详细代码
 
 [代码仓库](https://github.com/Niwenjin/CIFAR-10)
