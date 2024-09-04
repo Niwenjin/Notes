@@ -2,6 +2,15 @@
 
 ## 目录
 
+[简介](#简介)  
+[基本概念](#基本概念)  
+[使用 Docker 镜像](#使用-docker-镜像)  
+[操作 Docker 容器](#操作-docker-容器)  
+[访问 Docker 仓库](#访问-docker-仓库)  
+[Docker 数据管理](#docker-数据管理)  
+[使用网络](#使用网络)  
+[Docker Compose](#docker-compose)
+
 ## 简介
 
 Docker 使用 Google 公司推出的 Go 语言 进行开发实现，基于 Linux 内核的 cgroup，namespace，以及 OverlayFS 类的 Union FS 等技术，对进程进行封装隔离，属于操作系统层面的虚拟化技术。由于隔离的进程独立于宿主和其它的隔离的进程，因此也称其为容器。
@@ -176,7 +185,6 @@ Docker 不是虚拟机，容器就是进程。既然是进程，那么在启动�
 
 _在指令格式上，一般推荐使用 exec 格式，这类格式在解析时会被解析为 JSON 数组，因此一定要使用双引号 "，而不要使用单引号。_
 
-
 **ENV 设置环境变量**
 
 ENV 指令设置环境变量，无论是其他指令，如`RUN`，还是运行时的应用，都可以直接使用这里定义的环境变量。
@@ -213,4 +221,628 @@ EXPOSE 指令是声明运行时容器提供服务端口，这只是一个声明�
 
 USER 指令和 WORKDIR 相似，都是改变环境状态并影响以后的层。WORKDIR 是改变工作目录，USER 则是改变之后层的执行 RUN/CMD/ENTRYPOINT 这类命令的身份。
 
-- `USER <用户名>[:<用户组>]`
+-   `USER <用户名>[:<用户组>]`
+
+## 操作 Docker 容器
+
+容器是独立运行的一个或一组应用，以及它们的运行态环境。本章将具体介绍如何来管理一个容器，包括创建、启动和停止等。
+
+### 启动容器
+
+启动容器有两种方式，一种是基于镜像新建一个容器并启动，另外一个是将在终止状态（stopped）的容器重新启动。
+
+因为 Docker 的容器实在太轻量级了，很多时候用户都是随时删除和新创建容器。
+
+#### 新建并启动
+
+所需要的命令主要为 `docker run`。
+
+docker run 常用的参数有：
+
+```sh
+-d: 以 detached 模式运行容器，即在后台运行。
+
+-it: 这是两个参数的组合，-i 表示交互式，-t 分配一个伪终端。通常一起使用，用于创建一个交互式 shell。
+
+--name: 为容器指定一个名称。
+
+--rm: 容器退出时自动清理容器文件系统。
+
+-v 或 --volume: 挂载一个卷到容器，用于数据持久化或共享。
+
+-p 或 --publish: 将容器的端口映射到宿主机。
+
+-e 或 --env: 设置环境变量。
+
+--link: 链接到另一个容器。
+
+--dns: 设置容器的 DNS 服务器。
+
+--add-host: 添加自定义的 host 条目。
+
+--network: 指定容器的网络连接。
+
+--detach-keys: 指定容器退出的快捷键。
+
+--cpus: 限制容器使用的 CPU 数量。
+
+-m 或 --memory: 设置容器可以使用的最大内存。
+
+-u 或 --user: 设置容器的用户。
+
+-w 或 --workdir: 设置容器的工作目录。
+
+--restart: 设置容器的重启策略。
+
+--cap-add: 给容器添加 Linux 内核能力。
+
+--entrypoint: 设置容器的入口点。
+
+--privileged: 给容器提供扩展权限。
+```
+
+当利用 docker run 来创建容器时，Docker 在后台运行的标准操作包括：
+
+-   检查本地是否存在指定的镜像，不存在就从公有仓库下载
+-   利用镜像创建并启动一个容器
+-   分配一个文件系统，并在只读的镜像层外面挂载一层可读写层
+-   从宿主主机配置的网桥接口中桥接一个虚拟接口到容器中去
+-   从地址池配置一个 ip 地址给容器
+-   执行用户指定的应用程序
+-   执行完毕后容器被终止
+
+#### 启动已终止容器
+
+可以利用 `docker container start` 命令，直接将一个已经终止的容器启动运行。
+
+```sh
+$ docker ps -a
+...
+$ docker container start xxx
+```
+
+### 后台运行
+
+很多的时候，需要让 Docker 在后台运行而不是直接把执行命令的结果输出在当前宿主机下。此时，可以通过添加 -d 参数来实现。此时容器会在后台运行并不会把输出的结果 (STDOUT) 打印到宿主机，要查看标准输出的结果，需要使用`docker logs`命令查看。用法：
+
+```sh
+# docker logs 和 docker container logs 命令是等价的
+$ docker container logs [container ID or NAMES]
+```
+
+_注意：容器是否会长久运行，是和 docker run 指定的命令有关，和 -d 参数无关。_
+
+### 终止
+
+当 Docker 容器中指定的应用终结时，容器会自动终止。想要手动终止运行中的容器，可以使用 `docker container stop` 命令。
+
+通过 docker image ls -a 可以看到，终止状态的容器 STATUS 栏为 Exited。
+
+处于终止状态的容器，可以通过 docker container start 命令来重新启动。
+
+此外，docker container restart 命令会将一个运行态的容器终止，然后再重新启动它。
+
+### 进入容器
+
+使用 -d 参数时，容器启动后会进入后台。
+
+某些时候需要进入容器进行操作，此时可以使用 docker attach 命令或 docker exec 命令。推荐使用 docker exec 命令，原因如下。
+
+docker attach 命令：
+
+```sh
+$ docker run -dit ubuntu
+243c32535da7d142fb0e6df616a3c3ada0b8ab417937c853a9e1c251f499f550
+
+$ docker container ls
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+243c32535da7        ubuntu:latest       "/bin/bash"         18 seconds ago      Up 17 seconds                           nostalgic_hypatia
+
+$ docker attach 243c
+root@243c32535da7:/#
+```
+
+_注意： 如果从这个 stdin 中 exit，会导致容器的停止。_
+
+docker exec 命令:
+
+```sh
+$ docker run -dit ubuntu
+69d137adef7a8a689cbcb059e94da5489d3cddd240ff675c640c8d96e84fe1f6
+
+$ docker container ls
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+69d137adef7a        ubuntu:latest       "/bin/bash"         18 seconds ago      Up 17 seconds                           zealous_swirles
+
+$ docker exec -i 69d1 bash
+ls
+bin
+boot
+dev
+...
+
+$ docker exec -it 69d1 bash
+root@69d137adef7a:/#
+```
+
+docker exec 命令是在已经启动的容器中运行一个新的 Bash，因此从该 Bash 中 exit 不会导致容器的停止。
+
+### 导出和导入
+
+如果要导出本地某个容器，可以使用 docker export 命令。
+
+```sh
+$ docker container ls -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                    PORTS               NAMES
+7691a814370e        ubuntu:18.04        "/bin/bash"         36 hours ago        Exited (0) 21 hours ago                       test
+$ docker export 7691a814370e > ubuntu.tar
+```
+
+可以使用 docker import 从容器快照文件中再导入为镜像，例如：
+
+```sh
+$ cat ubuntu.tar | docker import - test/ubuntu:v1.0
+$ docker image ls
+REPOSITORY          TAG                 IMAGE ID            CREATED              VIRTUAL SIZE
+test/ubuntu         v1.0                9d37a6082e97        About a minute ago   171.3 MB
+```
+
+此外，也可以通过指定 URL 或者某个目录来导入，例如：
+
+```sh
+$ docker import http://example.com/exampleimage.tgz example/imagerepo
+```
+
+### 删除
+
+可以使用 docker rm 或 docker container rm 来删除一个处于终止状态的容器。
+
+如果要删除一个运行中的容器，可以添加 -f 参数。Docker 会发送 SIGKILL 信号给容器。
+
+如果要清理所有处于终止状态的容器，可以执行 `docker container prune` 命令。
+
+## 访问 Docker 仓库
+
+仓库（Repository）是集中存放镜像的地方。
+
+### Docker Hub
+
+Docker 官方维护了一个公共仓库 Docker Hub，大部分需求都可以通过在 Docker Hub 中直接下载镜像来实现。可以通过执行 docker login 命令交互式的输入用户名及密码来完成在命令行界面登录 Docker Hub。通过 docker logout 退出登录。
+
+通过 docker search 命令可以查找官方仓库中的镜像，并利用 docker pull 命令来将它下载到本地。
+
+用户也可以在登录后通过 docker push 命令来将自己的镜像推送到 Docker Hub。
+
+## Docker 数据管理
+
+在容器中管理数据主要有两种方式：
+
+-   数据卷（Volumes）
+-   挂载主机目录（Bind mounts）
+
+### 数据卷
+
+**数据卷**是一个可供一个或多个容器使用的特殊目录，它绕过 UFS，可以提供很多有用的特性：
+
+-   数据卷可以在容器之间共享和重用；
+-   对数据卷的修改会立马生效；
+-   对数据卷的更新不会影响镜像；
+-   数据卷会一直存在，即使容器被删除。
+
+_注意：数据卷的使用，类似于 Linux 下对目录或文件进行 mount，镜像中的被指定为挂载点的目录中的文件会复制到数据卷中（仅数据卷为空时会复制）。_
+
+创建一个数据卷：
+
+```sh
+# 创建一个数据卷
+$ docker volume create my-vol
+# 查看所有的数据卷
+$ docker volume ls
+# 查看指定的数据卷
+$ docker volume inspect my-vol
+# 等价于 docker inspect my-vol
+```
+
+在用 docker run 命令的时候，使用 --mount 标记来将*数据卷*挂载到容器里。在一次 docker run 中可以挂载多个数据卷。
+
+```sh
+# 创建一个名为 web 的容器，并加载一个数据卷到容器的 /usr/share/nginx/html 目录。
+$ docker run -d -P \
+    --name web \
+    # -v my-vol:/usr/share/nginx/html \
+    --mount source=my-vol,target=/usr/share/nginx/html \
+    nginx:alpine
+```
+
+删除数据卷：
+
+```sh
+$ docker volume rm my-vol
+```
+
+数据卷是被设计用来持久化数据的，它的生命周期独立于容器，Docker 不会在容器被删除后自动删除数据卷，并且也不存在垃圾回收这样的机制来处理没有任何容器引用的数据卷。如果需要在删除容器的同时移除数据卷。可以在删除容器的时候使用 `docker rm -v` 这个命令。
+
+无主的数据卷可能会占据很多空间，要清理请使用以下命令：
+
+```sh
+$ docker volume prune
+```
+
+### 挂载主机目录
+
+使用 --mount 标记可以指定挂载一个本地主机的目录到容器中去。
+
+```sh
+# 加载主机的 /src/webapp 目录到容器的 /usr/share/nginx/html目录
+$ docker run -d -P \
+    --name web \
+    # -v /src/webapp:/usr/share/nginx/html \
+    --mount type=bind,source=/src/webapp,target=/usr/share/nginx/html \
+    nginx:alpine
+```
+
+_注意：使用 --mount 参数挂载目录时如果目标目录不存在，Docker 会报错。_
+
+在主机里使用以下命令可以查看 web 容器的信息：
+
+```sh
+$ docker inspect web
+# Mounts 下包含了挂载目录的配置信息
+"Mounts": [
+    {
+        "Type": "bind",
+        "Source": "/src/webapp",
+        "Destination": "/usr/share/nginx/html",
+        "Mode": "",
+        "RW": true,
+        "Propagation": "rprivate"
+    }
+],
+```
+
+--mount 标记也可以从主机挂载单个文件到容器中：
+
+```sh
+# 用于记录在容器输入过的命令
+$ docker run --rm -it \
+   # -v $HOME/.bash_history:/root/.bash_history \
+   --mount type=bind,source=$HOME/.bash_history,target=/root/.bash_history \
+   ubuntu:18.04 \
+   bash
+```
+
+## 使用网络
+
+Docker 允许通过外部访问容器或容器互联的方式来提供网络服务。
+
+### 外部访问容器
+
+容器中可以运行一些网络应用，要让外部也可以访问这些应用，可以通过 -P 或 -p 参数来指定端口映射。
+
+当使用 -P 标记时，Docker 会随机映射一个端口到内部容器开放的网络端口。
+
+-p 则可以指定要映射的端口，并且，在一个指定端口上只可以绑定一个容器。支持的格式有 ip:hostPort:containerPort | ip::containerPort | hostPort:containerPort。
+
+-   映射所有接口地址
+
+```sh
+$ docker run -d -p 80:80 nginx:alpine
+```
+
+-   映射到指定地址的指定端口
+
+```sh
+$ docker run -d -p 127.0.0.1:80:80 nginx:alpine
+# 指定 udp 端口
+# $ docker run -d -p 127.0.0.1:80:80/udp nginx:alpine
+```
+
+-   映射到指定地址的任意端口
+
+```sh
+$ docker run -d -p 127.0.0.1::80 nginx:alpine
+```
+
+使用 docker port 来查看当前映射的端口配置，也可以查看到绑定的地址。
+
+```sh
+$ docker port fa 80
+0.0.0.0:32768
+```
+
+_注意：-p 标记可以多次使用来绑定多个端口。_
+
+### 容器互联
+
+可以将容器加入自定义的 Docker 网络来连接多个容器。
+
+```sh
+# 创建一个新的 Docker 网络
+$ docker network create -d bridge my-net
+# -d 参数指定网络类型
+```
+
+运行一个容器并连接到新建的 my-net 网络。
+
+```sh
+$ docker run -it --rm --name busybox1 --network my-net busybox sh
+# --network 参数用于指定连接到的容器网络
+```
+
+加入同一个容器网络的容器建立了互联关系，可以通过容器名互相访问。
+
+```sh
+$ docker container ls
+
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+b47060aca56b        busybox             "sh"                11 minutes ago      Up 11 minutes                           busybox2
+8720575823ec        busybox             "sh"                16 minutes ago      Up 16 minutes                           busybox1
+
+# 进入 busybox1 容器
+/ # ping busybox2
+PING busybox2 (172.19.0.3): 56 data bytes
+64 bytes from 172.19.0.3: seq=0 ttl=64 time=0.072 ms
+64 bytes from 172.19.0.3: seq=1 ttl=64 time=0.118 ms
+```
+
+_提示：如果有多个容器之间需要互相连接，推荐使用 Docker Compose。_
+
+## Docker Compose
+
+Docker Compose 是 Docker 官方编排（Orchestration）项目之一，负责快速的部署分布式应用。
+
+使用一个 Dockerfile 模板文件，可以让用户很方便的定义一个单独的应用容器。然而，在日常工作中，经常会碰到需要多个容器相互配合来完成某项任务的情况。例如要实现一个 Web 项目，除了 Web 服务容器本身，往往还需要再加上后端的数据库服务容器，甚至还包括负载均衡容器等。
+
+Compose 恰好满足了这样的需求。它允许用户通过一个单独的 docker-compose.yml 模板文件（YAML 格式）来定义一组相关联的应用容器为一个项目（project）。
+
+### 使用 Docker Compose
+
+Compose 中有两个重要的概念：
+
+-   服务 (service)：一个应用的容器，实际上可以包括若干运行**相同镜像**的容器实例。
+-   项目 (project)：由一组关联的应用容器组成的一个完整业务单元，在 docker-compose.yml 文件中定义。
+
+_提示：Compose 项目由 Python 编写，实现上调用了 Docker 服务提供的 API 来对容器进行管理。因此，只要所操作的平台支持 Docker API，就可以在其上利用 Compose 来进行编排管理。_
+
+模板文件是使用 Compose 的核心，涉及到的指令关键字也比较多。默认的模板文件名称为 docker-compose.yml，格式为 YAML 格式。
+
+```yaml
+version: "3"
+
+services:
+    webapp:
+        image: examples/web
+        ports:
+            - "80:80"
+        volumes:
+            - "/data"
+```
+
+很多指令与 docker run 对应参数功能一致：
+
+```yaml
+# 指定服务容器启动后执行的入口文件。
+entrypoint: /code/entrypoint.sh
+# 指定容器中运行应用的用户名。
+user: nginx
+# 指定容器中工作目录。
+working_dir: /code
+# 指定容器中搜索域名、主机名、mac 地址等。
+domainname: your_website.com
+hostname: test
+mac_address: 08-00-27-00-0C-0A
+```
+
+下面分别介绍各个指令的用法。
+
+**build**
+
+定 Dockerfile 所在文件夹的路径（可以是绝对路径，或者相对 docker-compose.yml 文件的路径）。 Compose 将会利用它自动构建这个镜像，然后使用这个镜像。
+
+```yaml
+version: "3"
+services:
+    webapp:
+        build: ./dir
+```
+
+也可以使用 context 指令指定 Dockerfile 所在文件夹的路径；使用 dockerfile 指令指定 Dockerfile 文件名；使用 arg 指令指定构建镜像时的变量。
+
+```yaml
+version: "3"
+services:
+    webapp:
+        build:
+            context: ./dir
+            dockerfile: Dockerfile-alternate
+            args:
+                buildno: 1
+```
+
+使用 cache_from 指定构建镜像的缓存。
+
+```yaml
+build:
+    context: .
+    cache_from:
+        - alpine:latest
+        - corp/web_app:3.14
+```
+
+**command**
+
+覆盖容器启动后默认执行的命令。
+
+```yaml
+command: echo "hello world"
+```
+
+**container_name**
+
+指定容器名称。默认将会使用 `项目名称_服务名称_序号` 这样的格式。
+
+```yaml
+container_name: docker-web-container
+```
+
+_注意: 指定容器名称后，该服务将无法进行扩展（scale），因为 Docker 不允许多个容器具有相同的名称。_
+
+**image**
+
+指定为镜像名称或镜像 ID。如果镜像在本地不存在，Compose 将会尝试拉取这个镜像。
+
+```yaml
+image: ubuntu
+image: orchardup/postgresql
+image: a4bc65fd
+```
+
+**devices**
+
+指定设备映射关系。
+
+```yaml
+devices:
+    - "/dev/ttyUSB1:/dev/ttyUSB0"
+```
+
+**depends_on**
+
+解决容器的依赖、启动先后的问题。
+
+```yaml
+version: "3"
+
+services:
+    web:
+        build: .
+        depends_on:
+            - db
+            - redis
+
+    redis:
+        image: redis
+
+    db:
+        image: postgres
+```
+
+_注意：web 服务不会等待 redisdb 「完全启动」之后才启动。_
+
+**dns**
+
+自定义 DNS 服务器。可以是一个值，也可以是一个列表。
+
+```yaml
+dns: 8.8.8.8
+
+dns:
+  - 8.8.8.8
+  - 114.114.114.114
+```
+
+**volumes**
+
+数据卷所挂载路径设置。该指令中路径支持相对路径。
+
+```yaml
+volumes:
+    - /var/lib/mysql
+    - cache/:/tmp/cache
+    - ~/configs:/etc/configs/:ro
+```
+
+如果路径为数据卷名称，必须在文件中配置数据卷。
+
+```yaml
+version: "3"
+
+services:
+    my_src:
+        image: mysql:8.0
+        volumes:
+            - mysql_data:/var/lib/mysql
+
+volumes:
+    mysql_data:
+```
+
+**env_file**
+
+文件中获取环境变量，可以为单独的文件路径或列表。
+
+```yaml
+env_file: .env
+
+env_file:
+  - ./common.env
+  - ./apps/web.env
+  - /opt/secrets.env
+```
+
+_注意：如果有变量名称与 environment 指令冲突，则按照惯例，以后者为准。_
+
+**environment**
+
+设置环境变量。你可以使用数组或字典两种格式。
+
+```yaml
+environment:
+  RACK_ENV: development
+  SESSION_SECRET:
+
+environment:
+  - RACK_ENV=development
+  - SESSION_SECRET
+```
+
+**expose**
+
+暴露端口，但不映射到宿主机，只被连接的服务访问。
+
+```yaml
+# 仅可以指定内部端口为参数
+expose:
+    - "3000"
+    - "8000"
+```
+
+**logging**
+
+配置日志选项。
+
+```yaml
+logging:
+    driver: syslog
+    options:
+        syslog-address: "tcp://192.168.0.42:123"
+```
+
+**networks**
+
+配置容器连接的网络。
+
+```yaml
+version: "3"
+services:
+    some-service:
+        networks:
+            - some-network
+            - other-network
+
+networks:
+    some-network:
+    other-network:
+```
+
+**ports**
+
+暴露端口信息。使用宿主端口：容器端口 (HOST:CONTAINER) 格式，或者仅仅指定容器的端口（宿主将会随机选择端口）都可以。
+
+```yaml
+ports:
+    - "3000"
+    - "8000:8000"
+    - "49100:22"
+    - "127.0.0.1:8001:8001"
+```
