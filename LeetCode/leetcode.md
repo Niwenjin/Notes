@@ -1,101 +1,261 @@
 # LeetCode
 
-## 目录
+## 哈希
 
-[模拟](#模拟)  
-[查找](#查找)  
-[双指针](#双指针)  
-[二分](#二分)  
-[滑动窗口](#滑动窗口)  
-[树的搜索](#树的搜索)  
-[回溯算法](#回溯算法)  
-[贪心算法](#贪心算法)  
-[递归&迭代](#递归迭代)  
-[图论](#图论)  
-[动态规划](#动态规划)  
-[位运算](#位运算)
+### 两数之和
 
-## 模拟
+[1. 两数之和（简单）](https://leetcode.cn/problems/two-sum/)
 
-### 类约瑟夫问题
+问题：给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出和为目标值 target 的那两个整数，并返回它们的数组下标。
 
-#### [390. 消除游戏](https://leetcode.cn/problems/elimination-game/description/)
+思路：创建一个哈希表，遍历 nums，对于每一个 x，查询哈希表中是否存在 target - x：若存在，返回两个数组下标；否则，将 x 插入到哈希表中。
 
-每次都将整数列表进行间隔删除，因此每次删除后剩余的整数列表都是等差数列。如果 k 是偶数，则从左向右删除；如果 k 是奇数，则从右向左删除。当等差数列只剩一个元素，返回队首元素。
+复杂度分析：
 
-## 查找
+-   时间复杂度：$O(N)$
+-   空间复杂度：$O(N)$
+
+### 字母异位词分组
+
+[49. 字母异位词分组（中等）](https://leetcode.cn/problems/group-anagrams/)
+
+问题：给你一个字符串数组，请你将字母异位词（重新排列源单词的所有字母得到的一个新单词）组合在一起。可以按任意顺序返回结果列表。
+
+思路：由于互为字母异位词的两个字符串包含的字母相同，因此对两个字符串分别进行排序之后得到的字符串一定是相同的，故可以将排序之后的字符串作为哈希表的键。
+
+复杂度分析：
+
+-   时间复杂度：$O(Nk\log k)$
+-   空间复杂度：$O(Nk)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        if(strs.empty())
+            return {};
+        std::unordered_map<string, vector<string>> map;
+        for (string& str: strs){
+            string key = str;
+            sort(key.begin(),key.end());
+            map[key].emplace_back(str);
+        }
+        vector<vector<string>> res;
+        for(auto it = map.begin();it!=map.end();++it){
+            res.emplace_back(it->second);
+        }
+        return res;
+    }
+};
+```
+
+### 最长连续序列
+
+[128. 最长连续序列（中等）](https://leetcode.cn/problems/longest-consecutive-sequence/)
+
+问题：给定一个未排序的整数数组 nums ，找出数字连续的最长序列（不要求序列元素在原数组中连续）的长度。
+
+思路：枚举法，用 unordered_set 构建去重的数组集合；再遍历集合，对于每个序列起始的元素进行循环，判断该序列长度。
+
+复杂度分析：
+
+-   时间复杂度：$O(N)$
+-   空间复杂度：$O(N)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        unordered_set<int> num_set;
+        for (const int& num : nums) {
+            num_set.insert(num);
+        }
+
+        int longestStreak = 0;
+
+        for (const int& num : num_set) {
+            // 剪枝，仅对序列开头的元素进行计数
+            if (!num_set.count(num - 1)) {
+                int currentNum = num;
+                int currentStreak = 1;
+
+                while (num_set.count(currentNum + 1)) {
+                    currentNum += 1;
+                    currentStreak += 1;
+                }
+                longestStreak = max(longestStreak, currentStreak);
+            }
+        }
+        return longestStreak;
+    }
+};
+```
 
 ## 双指针
 
-## 二分
+### 移动零
 
-### 类二分查找
+[283. 移动零（简单）](https://leetcode.cn/problems/move-zeroes/)
 
-#### [162. 寻找峰值](https://leetcode.cn/problems/find-peak-element/description/)
+问题：给定一个数组 nums，编写一个函数将所有 0 移动到数组的末尾，同时保持非零元素的相对顺序。
 
-用类二分查找，若 nums[mid] > nums[mid + 1]，说明峰值在 mid 左边，令 high = mid；若 nums[mid] < nums[mid + 1]，说明峰值在 mid 右边，令 low = mid + 1。循环结束返回 high。
+思路：创建两个指针 i 和 j。j 遍历整个数组，每当遇到非 0 元素就交换 i 和 j 的元素，并且 i 向右移动。当 j 指针遍历完整个数组时，i 指针就指向最后一个非零元素后的位置。此时 i 向后遍历完数组，并将途径的元素全部赋值为 0。
 
-## 滑动窗口
+_优化：每次只需要交换 i 和 j 的元素。_
 
-## 树的搜索
+复杂度分析：
 
-## 回溯算法
+-   时间复杂度：$O(N)$
+-   空间复杂度：$O(1)$
 
-## 贪心算法
+实现：
 
-## 递归&迭代
+```cpp
+class Solution {
+public:
+    void moveZeroes(vector<int>& nums) {
+        int n = nums.size(), left = 0, right = 0;
+        while (right < n) {
+            if (nums[right]) {
+                swap(nums[left], nums[right]);
+                left++;
+            }
+            right++;
+        }
+    }
+};
+```
 
-## 图论
+### 盛最多水的容器
 
-### BFS
+[11. 盛最多水的容器（中等）](#https://leetcode.cn/problems/container-with-most-water/)
 
-### DFS
+问题：给定一个长度为 n 的整数数组 height 。有 n 条垂线，第 i 条线的两个端点是 (i, 0) 和 (i, height[i])。找出其中的两条线，使得它们与 x 轴共同构成的容器可以容纳最多的水。返回容器可以储存的最大水量。
 
-### 多源 BFS
+思路：使用双指针指向数组两端。每次计算当前容量`min(height[l], height[r])*(r-l)`，如果大于max就更新。之后将两个指针指向的较小的那端向中间移动，直到两个指针相遇。返回max。
 
-### 双向 BFS
+复杂度分析：
 
-### 迭代加深
+-   时间复杂度：$O(N)$
+-   空间复杂度：$O(1)$
 
-### 拓扑排序
+实现：
 
-### 最短路
+```cpp
+class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        int l = 0, r = height.size() - 1;
+        int ans = 0;
+        while (l < r) {
+            int area = min(height[l], height[r]) * (r - l);
+            ans = max(ans, area);
+            if (height[l] <= height[r]) {
+                ++l;
+            }
+            else {
+                --r;
+            }
+        }
+        return ans;
+    }
+};
+```
 
-### 最小生成树
+### 三数之和
 
-### 并查集
+[15. 三数之和（中等）](https://leetcode.cn/problems/3sum/)
 
-### 启发式搜索
+问题：给你一个整数数组 nums ，判断是否存在三元组 [nums[i], nums[j], nums[k]] 满足 i != j、i != k 且 j != k ，同时还满足 nums[i] + nums[j] + nums[k] == 0 。请你返回所有和为 0 且不重复的三元组。
 
-## 动态规划
+思路：先排序，再遍历数组，确定第一个数，在右侧的元素中寻找另外两个数。由于元素有序，只需要用双指针指向右侧元素的两端，如果和较大，就将右指针左移；如果和较小，就将左侧指针右移；如果找到结果，返回三元组。由于要求结果不重复，第一和第二个元素指针右移时需要判断是否和上一个重复，如果重复则继续移动。
 
-### 路径规划
+复杂度分析：
 
-#### [64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/description/)
+-   时间复杂度：$O(N^2)$。双重循环遍历数组。
+-   空间复杂度：$O(\log N)$。如果原地排序，考虑排序需要的额外空间为$O(\log N)$；如果要存储 nums 的排序副本，则为$O(N)$
 
-建立一个数组储存该位置的最小路径。初始化`dp[0][0] = grid[0]`，遍历数组，每个位置的最小路径更新为`grid[i][j] + MIN(dp[i][j - 1], dp[i - 1][j])`，返回`dp[m-1][n-1]`。
+实现：
 
-### 类递归问题
+```cpp
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) {
+        int n = nums.size();
+        sort(nums.begin(), nums.end());
+        vector<vector<int>> ans;
+        // 枚举 a
+        for (int first = 0; first < n; ++first) {
+            // 需要和上一次枚举的数不相同
+            if (first > 0 && nums[first] == nums[first - 1]) {
+                continue;
+            }
+            // c 对应的指针初始指向数组的最右端
+            int third = n - 1;
+            int target = -nums[first];
+            // 枚举 b
+            for (int second = first + 1; second < n; ++second) {
+                // 需要和上一次枚举的数不相同
+                if (second > first + 1 && nums[second] == nums[second - 1]) {
+                    continue;
+                }
+                // 需要保证 b 的指针在 c 的指针的左侧
+                while (second < third && nums[second] + nums[third] > target) {
+                    --third;
+                }
+                // 如果指针重合，随着 b 后续的增加
+                // 就不会有满足 a+b+c=0 并且 b<c 的 c 了，可以退出循环
+                if (second == third) {
+                    break;
+                }
+                if (nums[second] + nums[third] == target) {
+                    ans.push_back({nums[first], nums[second], nums[third]});
+                }
+            }
+        }
+        return ans;
+    }
+};
+```
 
-#### [70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/description/)
+### 接雨水
 
-`f(x) = f(x-1) + f(x-2)`类似斐波那契数列。
+[42. 接雨水（困难）](https://leetcode.cn/problems/trapping-rain-water/)
 
-### 类背包问题
+问题：给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
 
-#### [416. 分割等和子集](https://leetcode.cn/problems/partition-equal-subset-sum/description/)
+思路：用双指针从两端向中间遍历，记录leftmax和rightmax。当左侧墙较低时，该列能装的水为`leftmax - height[left]`；右侧同理。
 
-创建二维数组 dp 包含 n 行 target+1 列，其中`dp[i][j]` 表示从数组的[0,i]下标范围内选取若干个正整数（可以是 0 个），是否存在一种选取方案使得被选取的正整数的和等于 j。遍历更新数组，返回`dp[n-1][target]`。
+复杂度分析：
 
-#### [413. 等差数列划分](https://leetcode.cn/problems/arithmetic-slices/description/)
+-   时间复杂度：$O(N)$
+-   空间复杂度：$O(1)$
+-   
+实现：
 
-## 位运算
-
-### 二进制表示
-
-#### [231. 2 的幂](https://leetcode.cn/problems/power-of-two/description/)
-
-一个数 n 是 2 的幂，当且仅当 n 是正整数，并且 n 的二进制表示中仅包含 1 个 1。可以使用两种技巧：
-
-1. `n & (n - 1)`该位运算技巧可以直接将 n 二进制表示的最低位的 1 移除。只需判断`n & (n - 1) = 0`。
-2. `n & (-n)`该位运算技巧可以直接获取 n 二进制表示的最低位的 1。只需判断`n & (-n) = n`。
+```cpp
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int ans = 0;
+        int left = 0, right = height.size() - 1;
+        int leftMax = 0, rightMax = 0;
+        while (left < right) {
+            leftMax = max(leftMax, height[left]);
+            rightMax = max(rightMax, height[right]);
+            if (height[left] < height[right]) {
+                ans += leftMax - height[left];
+                ++left;
+            } else {
+                ans += rightMax - height[right];
+                --right;
+            }
+        }
+        return ans;
+    }
+};
+```
