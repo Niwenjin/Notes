@@ -40,6 +40,8 @@
 
 [Efective Modern C++](Effective/modern.md)
 
+[程序员的自我修养：链接、装载与库](CSAPP/lll.md)
+
 [深入理解计算机系统](CSAPP/csapp.md)
 
 [CUDA C 权威编程指南](CUDA/pccp.md)
