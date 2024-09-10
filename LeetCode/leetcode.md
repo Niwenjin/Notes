@@ -136,7 +136,7 @@ public:
 
 问题：给定一个长度为 n 的整数数组 height 。有 n 条垂线，第 i 条线的两个端点是 (i, 0) 和 (i, height[i])。找出其中的两条线，使得它们与 x 轴共同构成的容器可以容纳最多的水。返回容器可以储存的最大水量。
 
-思路：使用双指针指向数组两端。每次计算当前容量`min(height[l], height[r])*(r-l)`，如果大于max就更新。之后将两个指针指向的较小的那端向中间移动，直到两个指针相遇。返回max。
+思路：使用双指针指向数组两端。每次计算当前容量`min(height[l], height[r])*(r-l)`，如果大于 max 就更新。之后将两个指针指向的较小的那端向中间移动，直到两个指针相遇。返回 max。
 
 复杂度分析：
 
@@ -228,13 +228,13 @@ public:
 
 问题：给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
 
-思路：用双指针从两端向中间遍历，记录leftmax和rightmax。当左侧墙较低时，该列能装的水为`leftmax - height[left]`；右侧同理。
+思路：用双指针从两端向中间遍历，记录 leftmax 和 rightmax。当左侧墙较低时，该列能装的水为`leftmax - height[left]`；右侧同理。
 
 复杂度分析：
 
 -   时间复杂度：$O(N)$
 -   空间复杂度：$O(1)$
--   
+
 实现：
 
 ```cpp
@@ -255,6 +255,121 @@ public:
                 --right;
             }
         }
+        return ans;
+    }
+};
+```
+
+## 滑动窗口
+
+### 无重复字符的最长子串
+
+[3. 无重复字符的最长子串（中等）](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
+
+问题：给定一个字符串 s，请你找出其中不含有重复字符的最长子串的长度。
+
+思路：使用滑动窗口遍历字符串。每一步操作时，都将左边界右移一步，然后不断向右移动右边界，直到子串中出现重复字符（用哈希表判断）。在移动结束后，这个子串就对应着以左指针开始的，不包含重复字符的最长子串。
+
+复杂度分析：
+
+-   时间复杂度：$O(N)$
+-   空间复杂度：$O(|\Sigma|)$。存储字符集的哈希表所用空间。
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        // 哈希集合，记录每个字符是否出现过
+        unordered_set<char> occ;
+        int n = s.size();
+        // 右指针，初始值为 -1，相当于我们在字符串的左边界的左侧，还没有开始移动
+        int rk = -1, ans = 0;
+        // 枚举左指针的位置，初始值隐性地表示为 -1
+        for (int i = 0; i < n; ++i) {
+            if (i != 0) {
+                // 左指针向右移动一格，移除一个字符
+                occ.erase(s[i - 1]);
+            }
+            while (rk + 1 < n && !occ.count(s[rk + 1])) {
+                // 不断地移动右指针
+                occ.insert(s[rk + 1]);
+                ++rk;
+            }
+            // 第 i 到 rk 个字符是一个极长的无重复字符子串
+            ans = max(ans, rk - i + 1);
+        }
+        return ans;
+    }
+};
+```
+
+### 找到字符串中所有字母异位词
+
+[438. 找到字符串中所有字母异位词（中等）](https://leetcode.cn/problems/find-all-anagrams-in-a-string/)
+
+问题：给定两个字符串 s 和 p，找到 s 中所有 p 的异位词的子串，返回这些子串的起始索引。异位词指由相同字母重排列形成的字符串（包括相同的字符串）。
+
+思路：用滑动窗口遍历字符串 s，维护窗口中每种字母的数量。当窗口中每种字母的数量与字符串 p 中每种字母的数量相同时，则说明当前窗口为字符串 p 的异位词。
+
+优化：不再分别统计滑动窗口和字符串 p 中每种字母的数量，而是统计滑动窗口和字符串 p 中每种字母数量的差；并引入变量 differ 来记录当前窗口与字符串 p 中数量不同的字母的个数，并在滑动窗口的过程中维护它。
+
+复杂度分析：
+
+-   时间复杂度：$O(n+m+\Sigma)$。其中 n 为字符串 s 的长度，m 为字符串 p 的长度，其中 Σ 为所有可能的字符数。
+-   空间复杂度：$O(|\Sigma|)$。用于存储滑动窗口和字符串 p 中每种字母数量的差。
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        int sLen = s.size(), pLen = p.size();
+
+        if (sLen < pLen) {
+            return vector<int>();
+        }
+
+        vector<int> ans;
+        vector<int> count(26);
+        for (int i = 0; i < pLen; ++i) {
+            ++count[s[i] - 'a'];
+            --count[p[i] - 'a'];
+        }
+
+        int differ = 0;
+        for (int j = 0; j < 26; ++j) {
+            if (count[j] != 0) {
+                ++differ;
+            }
+        }
+
+        if (differ == 0) {
+            ans.emplace_back(0);
+        }
+
+        for (int i = 0; i < sLen - pLen; ++i) {
+            if (count[s[i] - 'a'] == 1) {  // 窗口中字母 s[i] 的数量与字符串 p 中的数量从不同变得相同
+                --differ;
+            } else if (count[s[i] - 'a'] == 0) {  // 窗口中字母 s[i] 的数量与字符串 p 中的数量从相同变得不同
+                ++differ;
+            }
+            --count[s[i] - 'a'];
+
+            if (count[s[i + pLen] - 'a'] == -1) {  // 窗口中字母 s[i+pLen] 的数量与字符串 p 中的数量从不同变得相同
+                --differ;
+            } else if (count[s[i + pLen] - 'a'] == 0) {  // 窗口中字母 s[i+pLen] 的数量与字符串 p 中的数量从相同变得不同
+                ++differ;
+            }
+            ++count[s[i + pLen] - 'a'];
+
+            if (differ == 0) {
+                ans.emplace_back(i + 1);
+            }
+        }
+
         return ans;
     }
 };
