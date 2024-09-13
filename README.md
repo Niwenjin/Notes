@@ -2,6 +2,8 @@
 
 ## 学习笔记
 
+[arch](arch/arch.md)
+
 [Linux C++开发](LinuxC++/linuxc++.md)
 
 [B+树](BPlusTree/b+tree.md)
