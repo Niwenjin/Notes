@@ -374,3 +374,218 @@ public:
     }
 };
 ```
+
+## 子串
+
+### 和为 K 的子数组
+
+[560. 和为 K 的子数组（中等）](https://leetcode.cn/problems/subarray-sum-equals-k/)
+
+问题：给你一个整数数组 nums 和一个整数 k，请你统计并返回该数组中和为 k 的子数组的个数。子数组是数组中元素的连续非空序列。
+
+思路：以为是滑动窗口，结果发现有负数，失败。尝试枚举，时间复杂为$O(n^2)$，超时。
+
+优化：采用动态规划，定义 pre[i] 为 [0..i] 里所有数的和，则 pre[i]=pre[i−1]+nums[i]。那么「[j..i] 这个子数组和为 k 」这个条件我们可以转化为 pre[i]−pre[j−1]==k，即 pre[j−1]==pre[i]−k。建立哈希表 mp，以和为键，出现次数为对应的值，记录 pre[i] 出现的次数，从左往右边更新 mp 边计算答案，那么以 i 结尾的答案 mp[pre[i]−k] 即可在 O(1) 时间内得到。最后的答案即为所有下标结尾的和为 k 的子数组个数之和。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int subarraySum(vector<int>& nums, int k) {
+        unordered_map<int, int> mp;
+        mp[0] = 1;
+        int count = 0, pre = 0;
+        for (auto& x:nums) {
+            pre += x;
+            if (mp.find(pre - k) != mp.end()) {
+                count += mp[pre - k];
+            }
+            mp[pre]++;
+        }
+        return count;
+    }
+};
+```
+
+### 滑动窗口最大值
+
+[239. 滑动窗口最大值（困难）](https://leetcode.cn/problems/sliding-window-maximum/)
+
+问题：给你一个整数数组 nums，有一个大小为 k 的滑动窗口从数组的最左侧移动到数组的最右侧。你只可以看到在滑动窗口内的 k 个数字。滑动窗口每次只向右移动一位。返回滑动窗口中的最大值。
+
+思路：维护一个降序的单调队列。考虑三种情况：
+
+-   窗口中的新元素比队头元素大，清空队列（新成员又新又大，前面的元素无用）；
+-   窗口中的新元素比队尾的元素大，则从队尾开始，删除所有比新成员小的元素；
+-   窗口中的新元素比队尾的元素小，加入队尾。
+
+由于需要记录窗口中的字串，队列中存储的应该是元素的 idx，每次加入后判断头部元素是否已经离开窗口，循环删除这些旧元素。
+
+技巧：`std::deque`是 C++标准库中的一个容器，全称为双端队列（double-ended queue），它提供了快速的两端访问和插入/删除操作。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(k)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+        int n = nums.size();
+        deque<int> q;
+        for (int i = 0; i < k; ++i) {
+            while (!q.empty() && nums[i] >= nums[q.back()]) {
+                q.pop_back();
+            }
+            q.push_back(i);
+        }
+
+        vector<int> ans = {nums[q.front()]};
+        for (int i = k; i < n; ++i) {
+            while (!q.empty() && nums[i] >= nums[q.back()]) {
+                q.pop_back();
+            }
+            q.push_back(i);
+            while (q.front() <= i - k) {
+                q.pop_front();
+            }
+            ans.push_back(nums[q.front()]);
+        }
+        return ans;
+    }
+};
+```
+
+### 最小覆盖子串
+
+[76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)
+
+问题：给你一个字符串 s 、一个字符串 t 。返回 s 中涵盖 t 所有字符的最小子串。如果 s 中不存在涵盖 t 所有字符的子串，则返回空字符串 "" 。
+
+思路：滑动窗口，用哈希表存储 t 中字母的出现次数。窗口右边界向右移动，如果覆盖成功，则不断将左边界向右移动，直到得到该右边界下的最小覆盖，与记录的最小覆盖比较。直到遍历完整个字符串。
+
+复杂度分析：
+
+-   时间复杂度：$O(|\Sigma|m+n)$。其中 m 为 s 的长度，n 为 t 的长度，$\Sigma$为字符集合的大小。
+-   空间复杂度：$O(\Sigma)$。
+
+实现：
+
+```cpp
+class Solution {
+    bool is_covered(int cnt_s[], int cnt_t[]) {
+        for (int i = 'A'; i <= 'Z'; i++) {
+            if (cnt_s[i] < cnt_t[i]) {
+                return false;
+            }
+        }
+        for (int i = 'a'; i <= 'z'; i++) {
+            if (cnt_s[i] < cnt_t[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+public:
+    string minWindow(string s, string t) {
+        int m = s.length();
+        int ans_left = -1, ans_right = m, left = 0;
+        int cnt_s[128]{}, cnt_t[128]{};
+        for (char c : t) {
+            cnt_t[c]++;
+        }
+        for (int right = 0; right < m; right++) { // 移动子串右端点
+            cnt_s[s[right]]++; // 右端点字母移入子串
+            while (is_covered(cnt_s, cnt_t)) { // 涵盖
+                if (right - left < ans_right - ans_left) { // 找到更短的子串
+                    ans_left = left; // 记录此时的左右端点
+                    ans_right = right;
+                }
+                cnt_s[s[left++]]--; // 左端点字母移出子串
+            }
+        }
+        return ans_left < 0 ? "" : s.substr(ans_left, ans_right - ans_left + 1);
+    }
+};
+```
+
+## 普通数组
+
+### 最大子数组和
+
+[53. 最大子数组和（中等）](https://leetcode.cn/problems/maximum-subarray/)
+
+问题：给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+
+思路：动态规划。$f(i)$代表以第$i$个数结尾的“连续子数组的最大和”，$f(i)=max\{f(i−1)+nums[i],nums[i]\}$。只需要求出每个位置的 $f(i)$，然后返回数组中的最大值即可。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        int pre = 0, maxAns = nums[0];
+        for (const auto &x: nums) {
+            pre = max(pre + x, x);
+            maxAns = max(maxAns, pre);
+        }
+        return maxAns;
+    }
+};
+```
+
+### 合并区间
+
+[56. 合并区间（中等）](https://leetcode.cn/problems/merge-intervals/)
+
+问题：以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi] 。请你合并所有重叠的区间，并返回一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间。
+
+思路：先按照第一个元素进行排序，排序后，所有能合并的区间必定都是连续的。遍历数组，维护两个端点的下标：如果能合并，更新右端点；如果不能合并，将当前区间压入结果中，并更新左端点，开始计算下一个区间。
+
+技巧：对于多层嵌套数组，sort()可以直接使用外层迭代器进行排序。
+
+复杂度分析
+
+-   时间复杂度：$O(nlogn)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        if (intervals.size() == 0) {
+            return {};
+        }
+        sort(intervals.begin(), intervals.end());
+        vector<vector<int>> merged;
+        for (int i = 0; i < intervals.size(); ++i) {
+            int L = intervals[i][0], R = intervals[i][1];
+            if (!merged.size() || merged.back()[1] < L) {
+                merged.push_back({L, R});
+            }
+            else {
+                merged.back()[1] = max(merged.back()[1], R);
+            }
+        }
+        return merged;
+    }
+};
+```

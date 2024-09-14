@@ -395,8 +395,12 @@
 设置姓名邮箱
 
 ```shell
+# 设置全局
 git config --global user.name Niwenjin
 git config --global user.email ni_wenjin@qq.com
+# 仅设置当前仓库
+git config user.name Niwenjin
+git config user.email ni_wenjin@qq.com
 ```
 
 ## GCC
