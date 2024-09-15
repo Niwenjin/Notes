@@ -1,5 +1,28 @@
 # Arch Linux
 
+## 包管理器
+
+Paru是yaourt的一个现代化替代品，旨在提供更快、更稳定且功能丰富的AUR包管理体验。它基于yay进行改进，增加了许多新特性和优化，使得管理Arch Linux系统中的自定义软件库变得更加方便。
+
+```sh
+$ paru
+# 更新所有软件包，等效于 paru -Syu
+$ paru <packagename>
+# 查找软件包
+$ paru -S <packagename>
+# 安装指定的包
+$ paru -c/--clean
+# 清理不被需要的包
+$ paru -P/--show
+# 打印相关选项，常用选项 -s 打印包统计信息和系统运行状况
+$ paru -R
+# 清除缓存数据，常用选项 -s 移除相关依赖
+$ paru -G <packagename>
+# 获取包的 PKGBUILD
+$ paru --help
+# 获取命令行帮助
+```
+
 ## 数据备份和恢复
 
 rsync 可用于备份数据。
