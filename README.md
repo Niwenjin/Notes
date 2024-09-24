@@ -54,6 +54,8 @@
 
 [Docker — 从入门到实践](Docker/docker.md)
 
+[Google C++ Style Guide](LinuxC++/googlec++.md)
+
 ## 论文阅读
 
 [The Google File System](paper/GFS/gfs.md)
