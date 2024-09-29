@@ -560,7 +560,7 @@ public:
 
 技巧：对于多层嵌套数组，sort()可以直接使用外层迭代器进行排序。
 
-复杂度分析
+复杂度分析：
 
 -   时间复杂度：$O(nlogn)$
 -   空间复杂度：$O(1)$
@@ -586,6 +586,737 @@ public:
             }
         }
         return merged;
+    }
+};
+```
+
+### 轮转数组
+
+[189. 轮转数组（中等）](https://leetcode.cn/problems/rotate-array/)
+
+问题：给定一个整数数组 nums，将数组中的元素向右轮转 k 个位置，其中 k 是非负数。
+
+思路：使用额外的数组，遍历原数组，将原数组下标为 i 的元素放至新数组下标为 (i+k)mod n 的位置。
+
+优化：数组翻转，原地操作，不需要额外空间。先将所有元素翻转，这样尾部的 kmodn 个元素就被移至数组头部，然后再翻转 [0,k mod n−1] 区间的元素和 [k mod n,n−1] 区间的元素。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    void reverse(vector<int>& nums, int start, int end) {
+        while (start < end) {
+            swap(nums[start], nums[end]);
+            start += 1;
+            end -= 1;
+        }
+    }
+
+    void rotate(vector<int>& nums, int k) {
+        k %= nums.size();
+        reverse(nums, 0, nums.size() - 1);
+        reverse(nums, 0, k - 1);
+        reverse(nums, k, nums.size() - 1);
+    }
+};
+```
+
+### 除自身以外数组的乘积
+
+[238. 除自身以外数组的乘积（中等）](https://leetcode.cn/problems/product-of-array-except-self/)
+
+问题：给你一个整数数组 nums，返回数组 answer ，其中 answer[i] 等于 nums 中除 nums[i] 之外其余各元素的乘积。请不要使用除法，且在 O(n) 时间复杂度内完成此题。
+
+思路：维护前后缀乘积。第一次从前往后遍历，计算每个位置的前缀元素的乘积；第一次从后往前遍历，计算每个位置的后缀元素的乘积。完成后每个位置的除自身以外的乘积为前缀与后缀的乘积。
+
+优化：用一个元素来跟踪后缀元素的乘积，前缀元素乘积原地维护。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        int length = nums.size();
+        vector<int> answer(length);
+
+        // answer[i] 表示索引 i 左侧所有元素的乘积
+        // 因为索引为 '0' 的元素左侧没有元素， 所以 answer[0] = 1
+        answer[0] = 1;
+        for (int i = 1; i < length; i++) {
+            answer[i] = nums[i - 1] * answer[i - 1];
+        }
+
+        // R 为右侧所有元素的乘积
+        // 刚开始右边没有元素，所以 R = 1
+        int R = 1;
+        for (int i = length - 1; i >= 0; i--) {
+            // 对于索引 i，左边的乘积为 answer[i]，右边的乘积为 R
+            an：swer[i] = answer[i] * R;
+            // R 需要包含右边所有的乘积，所以计算下一个结果时需要将当前值乘到 R 上
+            R *= nums[i];
+        }
+        return answer;
+    }
+};
+```
+
+### 缺失的第一个正数
+
+[41. 缺失的第一个正数（困难）](https://leetcode.cn/problems/first-missing-positive/)
+
+问题：给你一个未排序的整数数组 nums ，请你找出其中没有出现的最小的正整数。请你实现时间复杂度为 O(n) 并且只使用常数级别额外空间的解决方案。
+
+思路：将数组恢复成 [1, 2, 3, ..., N] 的形式，之后遍历数组，其中如果有某个位置上的数对应不上，就是缺失的正数。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int firstMissingPositive(vector<int>& nums) {
+        int n = nums.size();
+        for (int i = 0; i < n; ++i) {
+            while (nums[i] > 0 && nums[i] <= n && nums[nums[i] - 1] != nums[i]) {
+                swap(nums[nums[i] - 1], nums[i]);
+            }
+        }
+        for (int i = 0; i < n; ++i) {
+            if (nums[i] != i + 1) {
+                return i + 1;
+            }
+        }
+        return n + 1;
+    }
+};
+```
+
+## 矩阵
+
+### 矩阵置零
+
+[73. 矩阵置零（中等）](https://leetcode.cn/problems/set-matrix-zeroes/)
+
+问题：给定一个 m x n 的矩阵，如果一个元素为 0 ，则将其所在行和列的所有元素都设为 0 。请使用原地算法。
+
+思路：使用标记数组，记录每一行和每一列是否有零出现。
+
+优化：用矩阵的第一行和第一列代替方法一中的两个标记数组，以达到 O(1) 的额外空间。但这样会导致原数组的第一行和第一列被修改，无法记录它们是否原本包含 0。因此我们需要额外使用两个标记变量分别记录第一行和第一列是否原本包含 0。
+
+```cpp
+class Solution {
+public:
+    void setZeroes(vector<vector<int>>& matrix) {
+        int m = matrix.size();
+        int n = matrix[0].size();
+        int flag_col0 = false, flag_row0 = false;
+        for (int i = 0; i < m; i++) {
+            if (!matrix[i][0]) {
+                flag_col0 = true;
+            }
+        }
+        for (int j = 0; j < n; j++) {
+            if (!matrix[0][j]) {
+                flag_row0 = true;
+            }
+        }
+        for (int i = 1; i < m; i++) {
+            for (int j = 1; j < n; j++) {
+                if (!matrix[i][j]) {
+                    matrix[i][0] = matrix[0][j] = 0;
+                }
+            }
+        }
+        for (int i = 1; i < m; i++) {
+            for (int j = 1; j < n; j++) {
+                if (!matrix[i][0] || !matrix[0][j]) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+        if (flag_col0) {
+            for (int i = 0; i < m; i++) {
+                matrix[i][0] = 0;
+            }
+        }
+        if (flag_row0) {
+            for (int j = 0; j < n; j++) {
+                matrix[0][j] = 0;
+            }
+        }
+    }
+};
+```
+
+### 螺旋矩阵
+
+[54. 螺旋矩阵（中等）](https://leetcode.cn/problems/spiral-matrix/)
+
+问题：给你一个 m 行 n 列的矩阵 matrix ，请按照顺时针螺旋顺序，返回矩阵中的所有元素。
+
+思路：维护上下左右边界，每次碰到边界就进行收缩，直到上下边界相遇。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<int> spiralOrder(vector<vector<int>>& matrix) {
+        vector <int> ans;
+        if(matrix.empty()) return ans; //若数组为空，直接返回答案
+        int u = 0; //赋值上下左右边界
+        int d = matrix.size() - 1;
+        int l = 0;
+        int r = matrix[0].size() - 1;
+        while(true)
+        {
+            for(int i = l; i <= r; ++i) ans.push_back(matrix[u][i]); //向右移动直到最右
+            if(++ u > d) break; //重新设定上边界，若上边界大于下边界，则遍历遍历完成，下同
+            for(int i = u; i <= d; ++i) ans.push_back(matrix[i][r]); //向下
+            if(-- r < l) break; //重新设定有边界
+            for(int i = r; i >= l; --i) ans.push_back(matrix[d][i]); //向左
+            if(-- d < u) break; //重新设定下边界
+            for(int i = d; i >= u; --i) ans.push_back(matrix[i][l]); //向上
+            if(++ l > r) break; //重新设定左边界
+        }
+        return ans;
+    }
+};
+```
+
+### 旋转图像
+
+[48. 旋转图像（中等）](https://leetcode.cn/problems/rotate-image/)
+
+问题：给定一个 n × n 的二维矩阵 `matrix` 表示一个图像，请你将图像顺时针旋转 90 度。你必须在原地旋转图像。
+
+思路：找规律，从外层到内层循环，每次交换四个元素的位置。
+
+复杂度分析：
+
+-   时间复杂度：$O(n^2)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) {
+        int n = matrix.size();
+        for (int i = 0; i < n / 2; i++) {
+            for (int j = i; j < n - i - 1; j++) {
+                int tmp = matrix[i][j];
+                matrix[i][j] = matrix[n - j - 1][i];
+                matrix[n - j - 1][i] = matrix[n - i - 1][n - j - 1];
+                matrix[n - i - 1][n - j - 1] = matrix[j][n - i - 1];
+                matrix[j][n - i - 1] = tmp;
+            }
+        }
+    }
+};
+```
+
+优化：用翻转代替旋转，先根据水平轴翻转一次，再根据对角线翻转一次，即得到答案。
+
+### 搜索二维矩阵 II
+
+[240. 搜索二维矩阵 II（中等）](https://leetcode.cn/problems/search-a-2d-matrix-ii/)
+
+问题：编写一个高效的算法来搜索 ` m x n` 矩阵 `matrix` 中的一个目标值 `target` 。该矩阵具有以下特性：
+
+-   每行的元素从左到右升序排列。
+-   每列的元素从上到下升序排列。
+
+思路：阶梯形查找。从右上角开始搜索，当元素较大时下标左移，当元素较小时下标下移。
+
+复杂度分析：
+
+-   时间复杂度：$O(m+n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int m = matrix.size(), n = matrix[0].size();
+        int x = 0, y = n - 1;
+        while (x < m && y >= 0) {
+            if (matrix[x][y] == target) {
+                return true;
+            }
+            if (matrix[x][y] > target) {
+                --y;
+            }
+            else {
+                ++x;
+            }
+        }
+        return false;
+    }
+};
+```
+
+## 链表
+
+### 相交链表
+
+[160. 相交链表（简单）](https://leetcode.cn/problems/intersection-of-two-linked-lists/)
+
+问题：给你两个单链表的头节点 `headA` 和 `headB` ，请你找出并返回两个单链表相交的起始节点。如果两个链表不存在相交节点，返回 `null` 。
+
+思路：用哈希集合存储第一个链表的指针，遍历第二个链表，判断指针是否在集合中，返回在集合中的第一个指针。
+
+优化：双指针。每步操作更新指针 pA 和 pB：
+
+-   每步操作需要同时更新指针 pA 和 pB。
+-   如果指针 pA 不为空，则将指针 pA 移到下一个节点；如果指针 pB 不为空，则将指针 pB 移到下一个节点。
+-   如果指针 pA 为空，则将指针 pA 移到链表 headB 的头节点；如果指针 pB 为空，则将指针 pB 移到链表 headA 的头节点。
+-   当指针 pA 和 pB 指向同一个节点或者都为空时，返回它们指向的节点或者 null。
+
+_提示：相当于在两条链表的末尾各接上另一条链表，A+B 和 B+A 长度相等。如果相遇时在末尾，说明没有相交；否则，会在相交处相遇。_
+
+复杂度分析：
+
+-   时间复杂度：$O(m+n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {
+        if (headA == nullptr || headB == nullptr) {
+            return nullptr;
+        }
+        ListNode *pA = headA, *pB = headB;
+        while (pA != pB) {
+            pA = pA == nullptr ? headB : pA->next;
+            pB = pB == nullptr ? headA : pB->next;
+        }
+        return pA;
+    }
+};
+```
+
+### 反转链表
+
+[206. 反转链表（简单）](https://leetcode.cn/problems/reverse-linked-list/)
+
+问题：给你单链表的头节点 `head` ，请你反转链表，并返回反转后的链表。
+
+思路 1：遍历链表，维护每个节点的 pre , curr 和 next ，进行交换。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
+        while (curr) {
+            ListNode* next = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = next;
+        }
+        return prev;
+    }
+};
+```
+
+思路 2：头插法。创建一个头节点，遍历链表，逐个插入头节点的下一个位置。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        if (!head)
+            return nullptr;
+        ListNode p(0, nullptr);
+        ListNode* q = head;
+        while (q) {
+            ListNode* tmp = q;
+            q = q->next;
+            tmp->next = p.next;
+            p.next = tmp;
+        }
+        return p.next;
+    }
+};
+```
+
+### 回文链表
+
+[234. 回文链表（简单）](https://leetcode.cn/problems/palindrome-linked-list/)
+
+问题：给你一个单链表的头节点 `head` ，请你判断该链表是否为回文链表。如果是，返回 `true` ；否则，返回 `false` 。
+
+思路：快慢指针找到链表后半部分的起点，翻转一半链表，与另一半进行比较。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool isPalindrome(ListNode* head) {
+        ListNode *fast = head, *q = head;
+        int cnt = 0;
+        // 快慢指针找到链表后半的起点
+        while (fast) {
+            q = q->next;
+            fast = fast->next;
+            cnt++;
+            if (fast) {
+                fast = fast->next;
+                cnt++;
+            }
+        }
+        // 翻转链表的前半部分（也可以翻转后半）
+        ListNode newhead(0, nullptr);
+        ListNode* p = head;
+        while (p != q) {
+            ListNode* tmp = p;
+            p = p->next;
+            tmp->next = newhead.next;
+            newhead.next = tmp;
+        }
+        // 如果链表长度为奇数，忽略中间的节点（翻转后在头部）
+        p = cnt % 2 == 0 ? newhead.next : newhead.next->next;
+        while (p) {
+            if (p->val != q->val)
+                return false;
+            p = p->next;
+            q = q->next;
+        }
+        return true;
+    }
+};
+```
+
+### 环形链表
+
+[141. 环形链表（简单）](https://leetcode.cn/problems/linked-list-cycle/)
+
+问题：给你一个链表的头节点 `head` ，判断链表中是否有环。
+
+思路：快慢指针，若相遇，则有环。「Floyd 判圈算法」
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool hasCycle(ListNode* head) {
+        if (head == nullptr || head->next == nullptr) {
+            return false;
+        }
+        ListNode* slow = head;
+        ListNode* fast = head->next;
+        while (slow != fast) {
+            if (fast == nullptr || fast->next == nullptr) {
+                return false;
+            }
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+        return true;
+    }
+};
+```
+
+### 环形链表 II
+
+[142. 环形链表 II（中等）](https://leetcode.cn/problems/linked-list-cycle-ii/)
+
+问题：给定一个链表的头节点 `head` ，返回链表开始入环的第一个节点。如果链表无环，则返回 `null`。
+
+思路：快慢指针。设链表中环外部分的长度为 a ，慢指针进入环内后，又走了 b 长度与快指针相遇，此时，快指针走了 2(a + b) 长度。设环内剩余长度为 c ，则有 a + n(b + c) + b = 2(a + b) ，化简得 a = c + (n - 1)(b + c) ，即从相遇点到入环点的距离加上 n−1 圈的环长，恰好等于从链表头部到入环点的距离。此时，再让另一个慢指针从 head 出发，当它到达环的入口处时，走过了 a 的距离，之前出发的慢指针共走过了 a + a + b ，也就是 a + n(b + c) 的距离，两个慢指针在入口处相遇。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        ListNode *slow = head, *fast = head;
+        while (fast != nullptr) {
+            slow = slow->next;
+            if (fast->next == nullptr) {
+                return nullptr;
+            }
+            fast = fast->next->next;
+            if (fast == slow) {
+                ListNode *ptr = head;
+                while (ptr != slow) {
+                    ptr = ptr->next;
+                    slow = slow->next;
+                }
+                return ptr;
+            }
+        }
+        return nullptr;
+    }
+};
+```
+
+### 合并两个有序链表
+
+[21. 合并两个有序链表（中等）](https://leetcode.cn/problems/merge-two-sorted-lists/)
+
+问题：将两个升序链表合并为一个新的升序链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。
+
+思路：迭代。
+
+复杂度分析：
+
+-   时间复杂度：$O(n+m)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+        ListNode* preHead = new ListNode(-1);
+
+        ListNode* prev = preHead;
+        while (l1 != nullptr && l2 != nullptr) {
+            if (l1->val < l2->val) {
+                prev->next = l1;
+                l1 = l1->next;
+            } else {
+                prev->next = l2;
+                l2 = l2->next;
+            }
+            prev = prev->next;
+        }
+
+        // 合并后 l1 和 l2 最多只有一个还未被合并完，我们直接将链表末尾指向未合并完的链表即可
+        prev->next = l1 == nullptr ? l2 : l1;
+
+        return preHead->next;
+    }
+};
+```
+
+### 两数相加
+
+[2. 两数相加（中等）](https://leetcode.cn/problems/add-two-numbers/)
+
+问题：给你两个非空的链表，表示两个非负的整数。它们每位数字都是按照逆序的方式存储的，并且每个节点只能存储一位数字。请你将两个数相加，并以相同形式返回一个表示和的链表。
+
+思路：逐位相加。重点在与判断进位。
+
+复杂度分析：
+
+-   时间复杂度：$O(\max(n, m))$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        ListNode* head = new ListNode();
+        ListNode* curr = head;
+        int carry = 0;
+        while(l1 || l2 || carry) {
+            int a = l1 ? l1->val : 0;
+            int b = l2 ? l2->val : 0;
+            int sum = a + b + carry;
+            carry = sum >= 10 ? 1 : 0;
+            curr->next = new ListNode(sum % 10);
+            curr = curr->next;
+            if(l1) l1 = l1->next;
+            if(l2) l2 = l2->next;
+        }
+        return head->next;
+    }
+};
+```
+
+### 删除链表的倒数第 N 个节点
+
+[19. 删除链表的倒数第 N 个节点（中等）](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)
+
+问题：给你一个链表，删除链表的倒数第 `n` 个结点，并且返回链表的头结点。
+
+思路：双指针。
+
+复杂度分析：
+
+-   时间复杂度：$O(L)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode *p = head, *q = head;
+        for (int i = 0; i < n; ++i)
+            q = q->next;
+        if (!q)
+            return head->next;
+        while (q->next) {
+            p = p->next;
+            q = q->next;
+        }
+        p->next = p->next->next;
+        return head;
+    }
+};
+```
+
+### 两两交换链表中的节点
+
+[24. 两两交换链表中的节点（中等）](https://leetcode.cn/problems/swap-nodes-in-pairs/)
+
+问题：给你一个链表，两两交换其中相邻的节点，并返回交换后链表的头节点。
+
+思路：迭代。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode* swapPairs(ListNode* head) {
+        if (!head || !head->next)
+            return head;
+        ListNode dummy(0, head);
+        ListNode *pre = &dummy, *p = head, *q = head->next;
+        while (true) {
+            p->next = q->next;
+            q->next = p;
+            pre->next = q;
+            pre = p;
+            p = p->next;
+            if (!p || !p->next)
+                break;
+            q = p->next;
+        }
+        return dummy.next;
+    }
+};
+```
+
+### K 个一组翻转链表
+
+[25. K 个一组翻转链表（困难）](https://leetcode.cn/problems/reverse-nodes-in-k-group/)
+
+问题：给你链表的头节点 `head` ，每 `k` 个节点一组进行翻转，请你返回修改后的链表。
+
+思路：迭代。关键在于子链表翻转后，前后的连接。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode* reverseKGroup(ListNode* head, int k) {
+        if (k < 2)
+            return head;
+        ListNode* dummy = new ListNode(0, head);
+        ListNode* pre = dummy;
+        ListNode* nextpre = pre;
+        while (true) {
+            for (int i = 0; i < k; ++i) {
+                // 检查接下来的子链表长度是否足够
+                if (nextpre->next)
+                    nextpre = nextpre->next;
+                else {
+                    head = dummy->next;
+                    delete (dummy);
+                    return head;
+                }
+            }
+            nextpre = pre->next;
+            reverse(pre, k);
+            pre = nextpre;
+        }
+        return dummy->next;
+    }
+
+private:
+    // 翻转子链表
+    void reverse(ListNode* pre, int k) {
+        ListNode* cur = pre->next->next;
+        ListNode* nextp = cur;
+        ListNode* tail = pre->next;
+        for (int i = 1; i < k; ++i) {
+            nextp = cur->next;
+            cur->next = pre->next;
+            pre->next = cur;
+            cur = nextp;
+        }
+        tail->next = nextp;
     }
 };
 ```
