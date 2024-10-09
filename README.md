@@ -42,15 +42,15 @@
 
 [Efective Modern C++](Effective/modern.md)
 
-[程序员的自我修养：链接、装载与库](CSAPP/lll.md)
+[程序员的自我修养: 链接、装载与库](CSAPP/lll.md)
 
 [深入理解计算机系统](CSAPP/csapp.md)
 
 [CUDA C 权威编程指南](CUDA/pccp.md)
 
-[TCP/IP 详解 卷 1：协议](Tcpip/tcpip.md)
+[TCP/IP 详解 卷 1: 协议](Tcpip/tcpip.md)
 
-[动手学深度学习（PyTorch 版）](Pytorch/pytorch.md)
+[动手学深度学习(PyTorch 版）](Pytorch/pytorch.md)
 
 [Docker — 从入门到实践](Docker/docker.md)
 
