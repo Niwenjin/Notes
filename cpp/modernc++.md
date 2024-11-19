@@ -428,6 +428,99 @@ Point3D p{ .z = 3 };  // 其他变量调用默认初始化 x = 0, y = 0
     Point p{ .x = 2, 3 };  // 编译失败，混用数据成员的初始化
     ```
 
+## 第 10 章 默认和删除函数
+
+C++标准规定，编译器会为类添加加默认特殊成员函数。特殊成员函数一共有 6 个：
+
+1. 构造函数
+2. 析构函数
+3. 复制构造函数
+4. 复制赋值运算符函数
+5. 移动构造函数（C++11 新增）
+6. 移动赋值运算符函数（C++11 新增）
+
+```cpp
+struct type {
+	type() = default;
+	virtual ~type() = delete;
+	type(const type &);
+};
+type::type(const type &) = default;
+```
+
+## 第 11 章 非受限联合类型
+
+为了让联合类型更加实用，在 C++11 标准中解除了大部分限制，联合类型的成员可以是除了引用类型外的所有类型。如果有联合类型中存在非平凡类型，那么这个联合类型的特殊成员函数将被隐式删除，也就是说我们必须自己至少提供联合类型的构造和析构函数。
+
+## 第 12 章 委托构造函数
+
+为了合理复用构造函数来减少代码冗余，C++11 标准支持了**委托构造函数**：某个类型的一个构造函数可以委托同类型的另一个构造函数对对象进行初始化，前者为委托构造函数，后者为代理构造函数。只需要在委托构造函数的*初始化列表*中调用代理构造函数即可，例如：
+
+```cpp
+class X {
+public:
+	X() : X(0, 0.) {}
+	X(int a) : X(a, 0.) {}
+	X(double b) : X(0, b) {}
+	X(int a, double b) : a_(a), b_(b) { CommonInit(); }  // 代理构造函数
+private:
+	void CommonInit() {}
+	int a_;
+	double b_;
+};
+```
+
+每个构造函数都可以委托另一个构造函数为代理。也就是说，可能存在一个构造函数，它既是委托构造函数也是代理构造函数。因此，要防范循环委托，这会导致程序运行时发现未定义行为，通常的结果是栈内存耗尽崩溃。
+
+如果一个构造函数为委托构造函数，那么其初始化列表里就不能对数据成员和基类进行初始化：
+
+```cpp
+class X {
+public:
+	X() : a_(0), b_(0) { CommonInit(); }
+	X(int a) : X(), a_(a) {}     // 编译错误
+	X(double b) : X(), b_(b) {}  // 编译错误
+private:
+	void CommonInit() {}
+	int a_;
+	double b_;
+};
+```
+
+委托构造函数的执行顺序是先执行代理构造函数的初始化列表，然后执行代理构造函数的主体，最后执行委托构造函数的主体。
+
+如果在代理构造函数执行完成后，委托构造函数主体抛出了异常，则自动调用该类型的析构函数。
+
+## 第 13 章 继承构造函数
+
+C++11 的继承构造函数中，可以使用 using 关键字将基类的函数引入派生类。
+
+```cpp
+class Base {
+public:
+	Base() : x_(0), y_(0.) {};
+	Base(int x, double y) : x_(x), y_(y) {}
+	Base(int x) : x_(x), y_(0.) {}
+	Base(double y) : x_(0), y_(y) {}
+private:
+	int x_;
+	double y_;
+};
+class Derived : public Base {
+public:
+	using Base::Base;  // 让编译器生成转发到基类的构造函数
+};
+```
+
+使用继承构造函数虽然很方便，但是还有 6 条规则需要注意。
+
+1. 派生类是隐式继承基类的构造函数，所以只有在程序中使用了这些构造函数，编译器才会为派生类生成继承构造函数的代码。
+2. 派生类不会继承基类的默认构造函数和复制构造函数。
+3. 继承构造函数不会影响派生类默认构造函数的隐式声明。
+4. 在派生类中声明签名相同的构造函数会禁止继承相应的构造函数。
+5. 派生类继承多个签名相同的构造函数会导致编译失败。
+6. 继承构造函数的基类构造函数不能为私有。
+
 ## 第 14 章 强枚举类型
 
 由于枚举类型存在一些类型安全的问题，C++11 标准增加了强枚举类型。强枚举类型具备以下 3 个新特性。
@@ -494,6 +587,51 @@ switch (c) {
 	return "none";
 }
 ```
+
+## 第 15 章 扩展的聚合类型
+
+C++17 标准对聚合类型的定义做出了大幅修改，即从基类公开且非虚继承的类也可能是一个聚合。同时聚合类型还需要满足常规条件。
+
+1. 没有用户提供的构造函数。
+2. 没有私有和受保护的非静态数据成员。
+3. 没有虚函数。
+
+在新的扩展中，如果类存在继承关系，则额外满足以下条件。
+
+4. 必须是公开的基类，不能是私有或者受保护的基类。
+5. 必须是非虚继承。
+
+在标准库中提供了一个聚合类型的甄别办法 is_aggregate ，它可以帮助我们判断目标类型是否为聚合类型：
+
+```cpp
+class MyString : public std::string {};
+std::cout << "std::is_aggregate_v<MyString> = " << std::is_aggregate_v<MyString> << std::endl;
+```
+
+由于聚合类型定义的扩展，聚合对象的初始化方法也发生了变化。过去要想初始化派生类的基类，需要在派生类中提供构造函数，例如：
+
+```cpp
+class MyStringWithIndex : public std::string {
+public:
+	MyStringWithIndex(const std::string& str, int idx) :
+	std::string(str), index_(idx) {}
+	int index_ = 0;
+};
+```
+
+现在，由于聚合类型的扩展，这个过程得到了简化。需要做的修改只有两点，第一是删除派生类中用户提供的构造函数，第二是直接初始化：
+
+```cpp
+class MyStringWithIndex : public std::string {
+public:
+	int index_ = 0;
+};
+int main() {
+	MyStringWithIndex s{ {"hello world"}, 11 };
+}
+```
+
+删除派生类中用户提供的构造函数是为了让 MyStringWithIndex 成为一个 C++17 标准的聚合类型，而作为聚合类型直接使用大括号初始化即可。
 
 ## 第 16 章 override 和 final 说明符
 
@@ -952,3 +1090,237 @@ _注意：使用 constexpr 声明自定义类型的变量，必须确保这个�
 `if constexpr` 是 C++17 标准提出的一个非常有用的特性，可以用于编写紧凑的模板代码，让代码能够根据编译时的条件进行实例化。
 
 C++20 标准允许**constexpr 虚函数**。
+
+## 第 28 章 确定的表达式求值顺序
+
+在 C++17 之前，表达式求值顺序是没有确定的。比如：
+
+```cpp
+foo(a, b, c);                    // foo、a、b和c的求值顺序是没有确定的
+std::cout << f() << g() << h();  // f()、g()和h()的求值顺序是没有确定的
+```
+
+从 C++17 开始，函数表达式一定会在函数的参数之前求值。也就是说在 foo(a, b, c) 中，foo 一定会在 a、b 和 c 之前求值。但是，参数之间的求值顺序依然没有确定，也就是说 a、b 和 c 谁先求值还是没有规定。
+
+对于 new 表达式，C++17 也做了规定。`new T(E)` new 表达式的内存分配总是优先于 T 构造函数中参数 E 的求值。
+
+最后 C++17 还明确了一条规则：涉及重载运算符的表达式的求值顺序应由与之相应的内置运算符的求值顺序确定，而不是函数调用的顺序规则。
+
+## 第 29 章 字面量优化
+
+从 C++11 开始，标准库中引入了`std::hexfloat`和`std::defaultfloat`来修改浮点输入和输出的默认格式化，其中`std::hexfloat`可以将浮点数格式化为十六进制的字符串，而`std::defaultfloat`可以将格式还原到十进制。在 C++17 标准中，支持在源代码中使用十六进制浮点字面量来表示一个浮点数。
+
+```cpp
+double float_array[]{ 0x1.7p+2, 0x1.f4p+9, 0x1.df3b64p-4 };  // 用十六进制字面量表示浮点数
+```
+
+在 C++14 标准中定义了二进制整数字面量，正如十六进制（0x, 0X）和八进制（0）都有固定前缀一样，二进制整数字面量也有前缀 0b 和 0B。
+
+```cpp
+auto x = 0b11001101L + 0xcdl + 077LL + 42;  // 用二进制字面量表示整数
+```
+
+除了添加二进制整数字面量以外，C++14 标准还增加了一个用**单引号作为整数分隔符**的特性，目的是让比较长的整数阅读起来更加容易。单引号整数分隔符对于十进制、八进制、十六进制、二进制整数都是有效的。
+
+```cpp
+constexpr int x = 123'456;
+static_assert(x == 0x1e'240);
+static_assert(x == 036'11'00);
+static_assert(x == 0b11'110'001'001'000'000);
+```
+
+过去想在 C++中嵌入一段带格式和特殊符号的字符串是一件非常令人头痛的事情，为此，C++11 标准引入**原生字符串**字面量的概念。使用原生字符串字面量的代码会在编译的时候被编译器直接使用，也就是说保留了字符串里的格式和特殊字符，同时它也会忽略转移字符，概括起来就是所见即所得。使用方法为 `prefix R"delimiter(raw_ characters)delimiter"`，其中 prefix 和 delimiter 是可选部分，可以忽略。
+
+```cpp
+// 不使用原生字符串
+char hello_world_html[] =
+	"<!DOCTYPE html>\r\n"
+	"<html lang = \"en\">\r\n"
+	" <head>\r\n"
+	" <meta charset = \"utf-8\">\r\n"
+	" <meta name = \"viewport\" content = \"width=device-width, initial-scale=1, user-scalable=yes\">\r\n"
+	" <title>Hello World!</title>\r\n"
+	" </head>\r\n"
+	" <body>\r\n"
+	" Hello World!\r\n"
+	" </body>\r\n"
+	"</html>\r\n";
+// 使用原生字符串
+char hello_world_html[] = R"(<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initialscale=1, user-scalable=yes">
+	<title>Hello World!</title>
+</head>
+<body>
+	Hello World!
+</body>
+</html>
+)";
+```
+
+如果在声明的字符串内部有一个 字符组合正好是`)"`，原生字符串就会被截断。C++11 标准已经考虑到了这个问题，所以有了 delimiter（分隔符）这个元素。。delimiter 可以是由除括号、反斜杠和空格以外的任何源字符构成的字符序列，长度至多为 16 个字符。通过添加 delimiter 可以改变编译器对原生字符串字面量范围的判定，从而顺利编译带有`)"`的字符串。
+
+## 第 30 章 alignas 和 alignof
+
+C++11 中新增了 alignof 和 alignas 两个关键字，其中 alignof 运算符可以用于获取类型的对齐字节长度，alignas 说明符可以用来改变类型的默认对齐字节长度。
+
+```cpp
+auto x1 = alignof(int);
+
+struct X1 {
+	alignas(16) char a1;
+	alignas(double) int a2;
+	double a3;
+};
+```
+
+在 C++17 标准中， new 运算符也拥有了根据对齐字节长度分配对象的能力。这个能力是通过让 new 运算符接受一个 std::align\_ val_t 类型的参数来获得分配对象需要的对齐字节长度来实现的：
+
+```cpp
+void* operator new(std::size_t, std::align_val_t);
+void* operator new[](std::size_t, std::align_val_t);
+```
+
+## 第 31 章 属性说明符和标准属性
+
+属性说明符（也称为属性或特性）是用来给编译器提供额外信息的关键字，它们可以用来改变代码的行为或者给编译器提供优化的提示。C++11 标准的属性表示方法是以双中括号开头、以反双中括号结尾，括号中是具体的属性：
+
+```cpp
+[[attr]] [[attr1, attr2, attr3(args)]] [[namespace::attr(args)]]
+```
+
+从 C++11 到 C++20 标准一共只定义了 9 种标准属性：
+
+1. `noreturn`: C++11 标准引入，该属性用于声明函数不会返回。
+2. `carries_dependency`: C++11 标准引入，该属性允许跨函数传递内存依赖项。
+3. `deprecated`: C++14 标准引入，带有此属性的实体被声明为弃用。当代码中出现带有弃用属性的实体时，编译器通常会给出警告而 不是错误。
+4. `fallthrough`: C++17 标准引入，该属性可以在 switch 语句的上下文中提示编译器直落行为是有意的，并不需要给出警告。
+5. `nodiscard`: C++17 标准引入，该属性声明函数的返回值不应该被舍弃，否则鼓励编译器给出警告提示。
+6. `maybe_unused`: C++17 标准引入，该属性声明实体可能不会被应用，以消除编译器警告。
+7. `likely`和`unlikely`: C++20 标准引入，其中`likely`属性允许编译器对该属性所在的执行路径相对于其他执行路径进行优化；而`unlikely`属性恰恰相反。
+8. `no_unique_address`: C++20 标准引入，该属性指示编译器该数据成员不需要唯一的地址，也就是说它不需要与其他非静态数据成员使用不同的地址。
+
+## 第 32 章 新增预处理器和宏
+
+C++17 标准为预处理器增加了一个新特性`__has_include`，用于判断某个头文件是否能够被包含进来。
+
+```cpp
+#if __has_include(<optional>)
+#	include <optional>
+#	define have_optional 1
+#elif __has_include(<experimental/optional>)
+#	include <experimental/optional>
+#	define have_optional 1
+#	define experimental_optional 1
+#else
+#	define have_optional 0
+#endif
+```
+
+C++20 标准添加了一组用于测试功能特性的宏，这组宏可以帮助我们测试当前的编译环境对各种功能特性的支持程度。
+
+-   属性测试宏（\_\_has_cpp_attribute）可以指示编译环境是否支持某种属性。
+-   语言功能特性测试宏代表编译环境所支持的语言功能特性，每个宏将被展开为该特性添加到标准时的年份和月份。
+-   标准库功能特性测试宏代表编译环境所支持的标准库功能特性，它们通常包含在头文件或者表中的任意对应头文件中。
+
+C++11 标准引入了可变参数宏`__VA_ARGS__`，常见的用法集中于打印日志上，例如：
+
+```cpp
+#define LOG(msg, …) printf("[" __FILE__ ":%d] " msg, __LINE__, __VA_ARGS__)
+LOG("Hello %d", 2020);
+```
+
+C++20 标准引入了一个新的宏`__VA_OPT__`令可变参数宏更易于在可变参数为空的情况下使用。
+
+```cpp
+#define LOG(msg, …) printf("[" __FILE__ ":%d] " msg, __LINE__, __VA_OPT__ (,) __VA_ARGS__)
+```
+
+## 第 33 章 协程
+
+协程是一种可以被挂起和恢复的函数，它提供了一种创建异步代码的方法。C++20 标准中引入了 3 个新关键字，分别是`co_await`、`co_return`和`co_yield`，具有以上 3 个关键字中任意一个的函数就是协程。通常情况下，建议将协程和标准库中的`<future>`、`<generator>`一起使用，因为协程辅助代码较为复杂，所以应该尽量避免自定义它们。
+
+## 第 34 章 基础特性的其他优化
+
+C++11 标准将 explicit 引入自定义类型转换中，称为显式自定义类型转换。
+
+```cpp
+template<class T>
+class SomeStorage {
+public:
+	SomeStorage() = default;
+	SomeStorage(std::initializer_list<T> l) : data_(l) {};
+	explicit operator bool() const { return !data_.empty(); }
+private:
+	std::vector<T> data_;
+};
+```
+
+`std::launder()`是 C++17 标准库中新引入的函数，它的目的是防止编译器追踪到数据的来源以阻止编译器对数据的优化。
+
+返回值优化是 C++中的一种编译优化技术，它允许编译器将函数返回的对象直接构造到它们本来要存储的变量空间中而不产生临时对象。C++14 标准对返回值优化做了进一步的规定，规定中明确了对于常量表达式和常量初始化而言，编译器应该保证 RVO，但是禁止 NRVO。在 C++17 标准中提到了确保复制消除的新特性，它从另一个角度出发对 C++进行了性能优化，而且也能达到 RVO 的效果。
+
+C++20 标准允许按值进行默认比较。
+
+```cpp
+struct C {
+	int i;
+	friend bool operator==(C, C) = default;
+};
+```
+
+C++20 标准支持 new 表达式推导数组长度。
+
+```cpp
+int *x = new int[]{ 1, 2, 3 };
+char *s = new char[]{ "hello world" };
+```
+
+C++20 标准允许数组转换为未知范围的数组。
+
+```cpp
+void f(int(&)[]) {}
+int arr[1];
+int main(){
+	f(arr);
+	int(&r)[] = arr;
+}
+```
+
+C++20 标准允许，在 delete 运算符函数中，将析构对象和释放内存的操作分解开来。
+
+```cpp
+struct X {
+	X() {}
+	~X() { std::cout << "call dtor" << std::endl; }
+ 	void* operator new(size_t s) { return ::operator new(s); }
+	void operator delete(X* ptr, std::destroying_delete_t) {
+		std::cout << "call delete" << std::endl;
+		::operator delete(ptr);
+	}
+};
+```
+
+C++20 标准完善了调用伪析构函数结束对象声明周期的规则。
+
+C++20 标准修复了 const 和默认复制构造函数不匹配造成无法编译的问题。
+
+C++20 标准在部分情况中不推荐 volatile 的使用，包括：
+
+1. 不推荐算术类型的后缀++和--表达式以及前缀++和--表达式使用 volatile 限定符。
+2. 不推荐非类类型左操作数的赋值使用 volatile 限定符。
+3. 不推荐函数形参和返回类型使用 volatile 限定符。
+4. 不推荐结构化绑定使用 volatile 限定符。
+
+C++20 标准不推荐在下标表达式中使用逗号运算符。
+
+```cpp
+int a[]{ 1,2,3 };
+int x = 1, y = 2;
+std::cout << a[x, y];  // 相当于a[y]，但是不推荐使用
+// 提案文档希望array[x,y]这种表达方式能用在矩阵、视图、几何实体、图形API中。
+```
+
+模块（module）是 C++20 标准引入的一个新特性，它的主要用途是将大型工程中的代码拆分成独立的逻辑单元，以方便大型工程的代码管理。_到目前为止并没有主流编译器完全支持该特性。_
