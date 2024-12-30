@@ -2983,3 +2983,1610 @@ private:
     }
 };
 ```
+
+## 二分查找
+
+### 搜索插入位置
+
+[35. 搜索插入位置（简单）](https://leetcode.cn/problems/search-insert-position)
+
+问题：给定一个排序数组和一个目标值，在数组中找到目标值，并返回其索引。如果目标值不存在于数组中，返回它将会被按顺序插入的位置。
+
+思路：二分查找。如果没有找到，返回 `left` （找规律）。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int searchInsert(vector<int>& nums, int target) {
+        int left = 0, right = nums.size() - 1;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (nums[mid] == target)
+                return mid;
+            else if (nums[mid] < target)
+                left = mid + 1;
+            else
+                right = mid - 1;
+        }
+        return left;
+    }
+};
+```
+
+### 搜索二维矩阵
+
+[74. 搜索二维矩阵（中等）](https://leetcode.cn/problems/search-a-2d-matrix)
+
+问题：给你一个整数 `target` ，如果 `target` 在矩阵中，返回 `true` ；否则，返回 `false` 。每行中的整数从左到右按非严格递增顺序排列，每行的第一个整数大于前一行的最后一个整数。
+
+思路：二分查找。先查找 target 可能存在的行，在进入该行搜索对应的列。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log n + \log m)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>> matrix, int target) {
+        auto row = upper_bound(matrix.begin(), matrix.end(), target, [](const int b, const vector<int> &a) {
+            return b < a[0];
+        });
+        if (row == matrix.begin()) {
+            return false;
+        }
+        --row;
+        return binary_search(row->begin(), row->end(), target);
+    }
+};
+```
+
+### 在排序数组中查找元素的第一个和最后一个位置
+
+[34. 在排序数组中查找元素的第一个和最后一个位置（中等）](https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/)
+
+问题：给你一个按照非递减顺序排列的整数数组 `nums`，和一个目标值 `target`。请你找出给定目标值在数组中的开始位置和结束位置。
+
+思路：二分查找。寻找`target`的开始位置，结束位置即为`target+1`的开始位置-1。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+    // lower_bound 返回最小的满足 nums[i] >= target 的 i
+    // 如果数组为空，或者所有数都 < target，则返回 nums.size()
+    int lower_bound(vector<int> &nums, int target) {
+        int left = 0, right = (int) nums.size() - 1;
+        while (left <= right) {
+            // 循环不变量：
+            // nums[left-1] < target
+            // nums[right+1] >= target
+            int mid = left + (right - left) / 2;
+            if (nums[mid] < target) {
+                left = mid + 1; // 范围缩小到 [mid+1, right]
+            } else {
+                right = mid - 1; // 范围缩小到 [left, mid-1]
+            }
+        }
+        return left;
+    }
+
+public:
+    vector<int> searchRange(vector<int> &nums, int target) {
+        int start = lower_bound(nums, target);
+        if (start == nums.size() || nums[start] != target) {
+            return {-1, -1};
+        }
+        int end = lower_bound(nums, target + 1) - 1;
+        return {start, end};
+    }
+};
+```
+
+### 搜索旋转排列数组
+
+[33. 搜索旋转排序数组（中等）](https://leetcode.cn/problems/search-in-rotated-sorted-array/)
+
+问题：整数数组 `nums` 按升序排列，数组中的值互不相同。在传递给函数之前，`nums` 在预先未知的某个下标 `k`（`0 <= k < nums.length`）上进行了旋转，使数组变为 `[nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]]`（下标从 0 开始计数）。例如， `[0,1,2,4,5,6,7]` 在下标 `3` 处经旋转后可能变为 `[4,5,6,7,0,1,2]` 。给你旋转后的数组 `nums` 和一个整数 `target` ，如果 `nums` 中存在这个目标值 `target` ，则返回它的下标，否则返回 `-1` 。
+
+思路：二分查找。每次查看以当前 `mid` 为界分割出来的两个部分，`[l, mid]`和`[mid+1, r]`中至少有一个是有序的。通过有序的那部分的左右边界，可以判断出`target`是否在那部分中。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int n = (int)nums.size();
+        if (!n) {
+            return -1;
+        }
+        if (n == 1) {
+            return nums[0] == target ? 0 : -1;
+        }
+        int l = 0, r = n - 1;
+        while (l <= r) {
+            int mid = (l + r) / 2;
+            if (nums[mid] == target) return mid;
+            if (nums[0] <= nums[mid]) {
+                if (nums[0] <= target && target < nums[mid]) {
+                    r = mid - 1;
+                } else {
+                    l = mid + 1;
+                }
+            } else {
+                if (nums[mid] < target && target <= nums[n - 1]) {
+                    l = mid + 1;
+                } else {
+                    r = mid - 1;
+                }
+            }
+        }
+        return -1;
+    }
+};
+```
+
+### 寻找旋转排序数组中的最小值
+
+[153. 寻找旋转排序数组中的最小值（中等）](https://leetcode.cn/problems/find-minimum-in-rotated-sorted-array/)
+
+问题：给你一个元素值互不相同的数组 `nums` ，它原来是一个升序排列的数组，并按上述情形进行了多次旋转。请你找出并返回数组中的最小元素 。
+
+思路：二分查找。如果`nums[mid] < nums[right]`，那么最小值就在区间`[left, mid]`内；如果`nums[mid] >= nums[right]`，那么最小值一定在`(mid, right]`中。当`left == right`，此时最小值就是`nums[left]`。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int left = 0, right = nums.size() - 1;
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] < nums[right])
+                right = mid;  // 注意边界条件
+            else
+                left = mid + 1;
+        }
+        return nums[left];
+    }
+};
+```
+
+### 寻找两个正序数组的中位数
+
+[4. 寻找两个正序数组的中位数（困难）](https://leetcode.cn/problems/median-of-two-sorted-arrays/)
+
+问题：给定两个大小分别为 `m` 和 `n` 的正序（从小到大）数组 `nums1` 和 `nums2`。请你找出并返回这两个正序数组的中位数。
+
+思路：将问题转化为找到两个数组中第 k 小的数字。要找到第 k (k>1) 小的元素，那么就取 pivot1 = nums1[k/2-1] 和 pivot2 = nums2[k/2-1] 进行比较。nums1 中小于等于 pivot1 的元素有 k/2-1 个，nums2 中小于等于 pivot2 的元素有 k/2-1 个。取 pivot = min(pivot1, pivot2)，两个数组中小于等于 pivot 的元素共计不会超过 (k/2-1) + (k/2-1) <= k-2 个，因此较小的那一边的左边不可能是第 k 小的元素，左边界可以右移。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log {m+n})$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        int totalLength = nums1.size() + nums2.size();
+        if (totalLength % 2 == 1) {
+            return getKthElement(nums1, nums2, (totalLength + 1) / 2);
+        } else {
+            return (getKthElement(nums1, nums2, totalLength / 2) +
+                    getKthElement(nums1, nums2, totalLength / 2 + 1)) /
+                   2.0;
+        }
+    }
+
+private:
+    int getKthElement(const vector<int>& nums1, const vector<int>& nums2,
+                      int k) {
+        int m = nums1.size(), n = nums2.size(), offset1 = 0, offset2 = 0;
+        while (true) {
+            if (offset1 == m) {
+                return nums2[offset2 + k - 1];
+            }
+            if (offset2 == n) {
+                return nums1[offset1 + k - 1];
+            }
+            if (k == 1) {
+                return min(nums1[offset1], nums2[offset2]);
+            }
+            int mid1 = min(offset1 + k / 2 - 1, m - 1),
+                mid2 = min(offset2 + k / 2 - 1, n - 1);
+            if (nums1[mid1] <= nums2[mid2]) {
+                k -= mid1 - offset1 + 1;
+                offset1 = mid1 + 1;
+            } else {
+                k -= mid2 - offset2 + 1;
+                offset2 = mid2 + 1;
+            }
+        }
+    }
+};
+```
+
+## 栈
+
+### 有效的括号
+
+[20. 有效的括号（简单）](https://leetcode.cn/problems/valid-parentheses/)
+
+问题：给定一个只包括 `'('`，`')'`，`'{'`，`'}'`，`'['`，`']'` 的字符串 `s` ，判断字符串是否有效。
+
+思路：用栈解决。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n+|\Sigma|)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool isValid(string s) {
+        int n = s.size();
+        if (n % 2 == 1) {
+            return false;
+        }
+
+        unordered_map<char, char> pairs = {
+            {')', '('},
+            {']', '['},
+            {'}', '{'}
+        };
+        stack<char> stk;
+        for (char ch: s) {
+            if (pairs.count(ch)) {
+                if (stk.empty() || stk.top() != pairs[ch]) {
+                    return false;
+                }
+                stk.pop();
+            }
+            else {
+                stk.push(ch);
+            }
+        }
+        return stk.empty();
+    }
+};
+```
+
+### 最小栈
+
+[155. 最小栈（中等）](https://leetcode.cn/problems/min-stack/)
+
+问题：设计一个支持 `push` ，`pop` ，`top` 操作，并能在常数时间内检索到最小元素的栈。
+
+思路：用一个辅助栈存储当前栈顶元素入栈时的最小值。
+
+复杂度分析：
+
+-   时间复杂度：$O(1)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class MinStack {
+    stack<int> x_stack;
+    stack<int> min_stack;
+public:
+    MinStack() {
+        min_stack.push(INT_MAX);
+    }
+
+    void push(int x) {
+        x_stack.push(x);
+        min_stack.push(min(min_stack.top(), x));
+    }
+
+    void pop() {
+        x_stack.pop();
+        min_stack.pop();
+    }
+
+    int top() {
+        return x_stack.top();
+    }
+
+    int getMin() {
+        return min_stack.top();
+    }
+};
+```
+
+思路：用单链表 + 头插法实现栈。每个节点维护当前节点入栈时的最小值。
+
+实现：
+
+```cpp
+struct ListNode {
+    int val;
+    int min;
+    ListNode* next;
+    ListNode(int val, int min, ListNode* next)
+        : val(val), min(min), next(next) {}
+    ListNode() : ListNode(0, 0, nullptr) {}
+};
+
+class MinStack {
+public:
+    MinStack() { dummy = new ListNode(); }
+
+    void push(int val) {
+        int min = dummy->next ? dummy->next->min : val;
+        if (val < min)
+            min = val;
+        ListNode* tmp = new ListNode(val, min, dummy->next);
+        dummy->next = tmp;
+    }
+
+    void pop() {
+        ListNode* tmp = dummy->next;
+        if (tmp == nullptr)
+            return;
+        dummy->next = dummy->next->next;
+        delete (tmp);
+    }
+
+    int top() { return dummy->next->val; }
+
+    int getMin() { return dummy->next->min; }
+
+private:
+    ListNode* dummy;
+};
+```
+
+### 字符串解码
+
+[394. 字符串解码（中等）](https://leetcode.cn/problems/decode-string/)
+
+问题：给定一个经过编码的字符串，返回它解码后的字符串。编码规则为: `k[encoded_string]`，表示其中方括号内部的 `encoded_string` 正好重复 `k` 次。
+
+思路：构建辅助栈。一个辅助栈用于记录该层`[]`中元素重复的次数，一个辅助栈用于记录进入该层`[]`之前的字符串。当遇到`[`时进行记录；遇到`]`时进行解码。
+
+复杂度分析：
+
+-   时间复杂度：$O(|S|)$
+-   空间复杂度：$O(|S|)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    string decodeString(string s) {
+        stack<int> countStack{};
+        stack<string> strStack{};
+        string cur{};
+        int k = 0;
+        for (const char& c : s) {
+            if (c >= '0' && c <= '9') {
+                k = k * 10 + (c - '0');  // 处理多位数
+            } else if (c == '[') {
+                // 遇到 '['，将当前的字符串和数字推入各自的栈
+                countStack.push(k);
+                strStack.push(cur);
+                cur = "";
+                k = 0;
+            } else if (c == ']') {
+                // 遇到 ']'，解码
+                string tmp = strStack.top();
+                strStack.pop();
+                int repeat = countStack.top();
+                countStack.pop();
+                for (int i = 0; i < repeat; ++i) {
+                    tmp.append(cur);  // 重复当前字符串
+                }
+                cur = tmp;  // 更新当前字符串
+            } else {
+                // 如果是字母，直接加到当前字符串
+                cur.push_back(c);
+            }
+        }
+        return cur;
+    }
+};
+```
+
+### 每日温度
+
+[739. 每日温度（中等）](https://leetcode.cn/problems/daily-temperatures/)
+
+问题：给定一个整数数组 `temperatures` ，表示每天的温度，返回一个数组 `answer` ，其中 `answer[i]` 是指对于第 `i` 天，下一个更高温度出现在几天后。如果气温在这之后都不会升高，请在该位置用 `0` 来代替。
+
+思路：单调栈。单调栈通常用于求出数组中各个元素右侧第一个更大的元素及其下标，然后一并得到其他信息。单调栈的实现在于每遍历到一个新的元素，就将小于（或大于）该元素的栈顶全部弹出。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<int> dailyTemperatures(vector<int>& temperatures) {
+        int n = temperatures.size();
+        stack<int> idxStack{};
+        vector<int> ans(n, 0);
+        for (int i = 0; i < n; ++i) {
+            while (!idxStack.empty() && temperatures[i] > temperatures[idxStack.top()]) {
+                int idx = idxStack.top();
+                ans[idx] = i - idx;
+                idxStack.pop();
+            }
+            idxStack.push(i);
+        }
+        return ans;
+    }
+};
+```
+
+### 柱状图中最大的矩形
+
+[84. 柱状图中最大的矩形（困难）](https://leetcode.cn/problems/largest-rectangle-in-histogram/)
+
+问题：给定 _n_ 个非负整数，用来表示柱状图中各个柱子的高度。每个柱子彼此相邻，且宽度为 1 。求在该柱状图中，能够勾勒出来的矩形的最大面积。
+
+思路：单调栈。在一维数组中对于每一个数，找到左边和右边第一个比自己小的数的下标。以这个数为高度的柱子的底就被两个下标包围。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        int n = heights.size();
+        vector<int> left(n), right(n, n);
+        stack<int> mono_stack;
+        for (int i = 0; i < n; ++i) {
+            while (!mono_stack.empty() && heights[mono_stack.top()] >= heights[i]) {
+                right[mono_stack.top()] = i;  // 记录右侧第一个小于自身的下标
+                mono_stack.pop();
+            }
+            left[i] = (mono_stack.empty() ? -1 : mono_stack.top());  // 记录左侧第一个小于自身的下标
+            mono_stack.push(i);
+        }
+
+        int ans = 0;
+        for (int i = 0; i < n; ++i) {
+            // 以height[i]为高度的柱形，底在两侧第一个小于自身的坐标内侧
+            ans = max(ans, (right[i] - left[i] - 1) * heights[i]);
+        }
+        return ans;
+    }
+};
+```
+
+## 堆
+
+在需要寻找第 k 大或前 k 个元素时，通常会用到堆和堆排序。建堆的时间为 $O(n)$ ，排序的时间为 $O(n \log n)$ 。
+
+_提示：寻找第 k 大的元素时，可以建立大根堆，调整 k-1 次，堆顶元素即为所求；寻找前 k 大的元素时（不要求顺序），可以建立大小为 k 的小根堆，每次将新元素与堆顶比较，若更大则交换并调整。_
+
+### 数组中的第 K 个最大元素
+
+[215. 数组中的第 K 个最大元素（中等）](https://leetcode.cn/problems/kth-largest-element-in-an-array/)
+
+问题：给定整数数组 `nums` 和整数 `k`，请返回数组中第 `k` 个最大的元素。
+
+思路：建立大根堆，进行 `k-1` 次排序操作后，堆顶元素就是答案。
+
+复杂度分析：
+
+-   时间复杂度：$O(n \log n)$。建堆的时间复杂度为$O(n)$，最坏情况下排序时间复杂度为$O(n \log n)$。
+-   空间复杂度：$O(\log n)$
+
+实现（背诵）：
+
+```cpp
+class Solution {
+public:
+    void maxHeapify(vector<int>& a, int i, int heapSize) {
+        int l = i * 2 + 1, r = i * 2 + 2, largest = i;  // 左孩子下标为2*i+1; 右孩子下标为2*i+2
+        if (l < heapSize && a[l] > a[largest]) {
+            largest = l;
+        }
+        if (r < heapSize && a[r] > a[largest]) {
+            largest = r;
+        }
+        if (largest != i) {
+            swap(a[i], a[largest]);
+            maxHeapify(a, largest, heapSize);  // 如果进行了交换，需要向下调整
+        }
+    }
+
+    void buildMaxHeap(vector<int>& a, int heapSize) {
+        // 从最后一个非叶子节点开始往前调整
+        for (int i = heapSize / 2 - 1; i >= 0; --i) {
+            maxHeapify(a, i, heapSize);
+        }
+    }
+
+    int findKthLargest(vector<int>& nums, int k) {
+        int heapSize = nums.size();
+        buildMaxHeap(nums, heapSize);
+        for (int i = 0; i < k - 1; ++i) {
+            swap(nums[0], nums[--heapSize]);  // 将堆顶元素（最大值）和倒数第i个元素交换，后i个元素已经完成排序
+            maxHeapify(nums, 0, heapSize);  // 从堆顶开始调整
+        }
+        return nums[0];  // 排序k-1次后，大根堆顶是第k大的元素
+    }
+};
+```
+
+### 前 K 个高频元素
+
+[347. 前 K 个高频元素（中等）](https://leetcode.cn/problems/top-k-frequent-elements/)
+
+问题：给你一个整数数组 `nums` 和一个整数 `k` ，请你返回其中出现频率前 `k` 高的元素。你可以按任意顺序返回答案。
+
+思路：先遍历数组，将每个元素出现的次数存储在 map 中。再利用 map 中的元素建立大根堆，进行 k-1 次调整。
+
+优化：建立大小为 k 的小根堆，比较新元素和堆顶元素的大小，如果大于堆顶元素则进行交换和调整。
+
+复杂度分析：
+
+-   时间复杂度：$O(n \log n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    static bool cmp(pair<int, int>& m, pair<int, int>& n) {
+        return m.second > n.second;
+    }
+
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        unordered_map<int, int> occurrences;
+        for (auto& v : nums) {
+            occurrences[v]++;
+        }
+
+        // pair 的第一个元素代表数组的值，第二个元素代表了该值出现的次数
+        priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(&cmp)> q(cmp);
+        for (auto& [num, count] : occurrences) {
+            if (q.size() == k) {
+                if (q.top().second < count) {
+                    q.pop();
+                    q.emplace(num, count);
+                }
+            } else {
+                q.emplace(num, count);
+            }
+        }
+        vector<int> ret;
+        while (!q.empty()) {
+            ret.emplace_back(q.top().first);
+            q.pop();
+        }
+        return ret;
+    }
+};
+```
+
+### 数据流的中位数
+
+[295. 数据流的中位数（困难）](https://leetcode.cn/problems/find-median-from-data-stream/)
+
+问题：实现 MedianFinder 类。要求在数据流中找到中位数。
+
+思路：将数据分为左右两边，一边以最大堆的形式实现，可以快速获得左侧最大数， 另一边则以最小堆的形式实现。需要注意，左右侧数据的长度差不能超过 1。堆可以使用优先队列实现。
+
+优化：每次插入元素不用比较大小，只要先插入较小的堆，然后经过堆调整，再将堆顶元素推入另一个堆。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log n)$
+-   空间复杂度：$O(n)$
+
+实现（背诵）：
+
+```cpp
+class MedianFinder {
+public:
+    priority_queue<int, vector<int>, greater<int>> A; // 小顶堆，保存较大的一半
+    priority_queue<int, vector<int>, less<int>> B; // 大顶堆，保存较小的一半
+    MedianFinder() { }
+    void addNum(int num) {
+        if (A.size() != B.size()) {
+            A.push(num);
+            B.push(A.top());
+            A.pop();
+        } else {
+            B.push(num);
+            A.push(B.top());
+            B.pop();
+        }
+    }
+    double findMedian() {
+        return A.size() != B.size() ? A.top() : (A.top() + B.top()) / 2.0;
+    }
+};
+```
+
+## 贪心算法
+
+### 买卖股票的最佳时机
+
+[121. 买卖股票的最佳时机（简单）](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)
+
+问题：给定一个数组 `prices` ，它的第 `i` 个元素 `prices[i]` 表示一支给定股票第 `i` 天的价格。你只能选择某一天买入这只股票，并选择在未来的某一个不同的日子卖出该股票。设计一个算法来计算你所能获取的最大利润。
+
+思路：遍历数组，维护当前天数之前最低价格，当天利润 = 当天股价 - 历史低价。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int cost = INT_MAX, profit = 0;
+        for (int price : prices) {
+            cost = min(cost, price);
+            profit = max(profit, price - cost);
+        }
+        return profit;
+    }
+};
+```
+
+### 跳跃游戏
+
+[55. 跳跃游戏（中等）](https://leetcode.cn/problems/jump-game/)
+
+问题：给你一个非负整数数组 `nums` ，你最初位于数组的第一个下标。数组中的每个元素代表你在该位置可以跳跃的最大长度。判断你是否能够到达最后一个下标。
+
+思路：贪心算法。遍历数组中的每一个位置，并实时维护最远可以到达的位置`rightmax`。对于当前遍历到的位置 i，如果它可达，即`i<=rightmax`，就可以用 `i+nums[i]` 更新最远可以到达的位置。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool canJump(vector<int>& nums) {
+        int n = nums.size();
+        int rightmax = 0;
+        for (int i = 0; i < n; ++i) {
+            if (i <= rightmax) {
+                rightmax = max(rightmost, i + nums[i]);
+                if (rightmax >= n - 1) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+};
+```
+
+### 跳跃游戏 II
+
+[45. 跳跃游戏 II（中等）](https://leetcode.cn/problems/jump-game-ii/)
+
+问题：给定一个长度为 `n` 的整数数组 `nums`。每个元素 `nums[i]` 表示从索引 `i` 向前跳转的最大长度。返回到达 `nums[n - 1]` 的最小跳跃次数。
+
+思路：贪心算法。维护当前能够到达的最大下标位置，记为边界。从左到右遍历数组，到达边界时，更新边界并将跳跃次数增加 1。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int jump(vector<int>& nums) {
+        int end = 0, maxPos = 0, step = 0, n = nums.size();
+        for (int i = 0; i < n - 1; ++i) {
+            maxPos = max(maxPos, nums[i] + i);  // 维护当前能跳到的最远位置
+            if (i == end) {  // 到达最右起跳点
+                end = maxPos;  // 进行下一次跳跃
+                ++step;
+            }
+        }
+        return step;
+    }
+};
+```
+
+### 划分字母区间
+
+[763. 划分字母区间（中等）](https://leetcode.cn/problems/partition-labels/)
+
+问题：给你一个字符串 `s` 。我们要把这个字符串划分为尽可能多的片段，同一字母最多出现在一个片段中。
+
+思路：贪心算法。先遍历一次字符串，记录每个字母最后一次出现的下标。再次遍历字符串，维护当前片段中所有字母最右的下标，当遍历到该下标，该片段结束，开始下一个片段。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<int> partitionLabels(string s) {
+        vector<int> words(26);
+        int n = s.size();
+        for (int i = 0; i < n; ++i) {
+            words[s[i] - 'a'] = i;
+        }
+        int idx = 0, start = 0, end = 0;
+        vector<int> ans;
+        for (int i = 0; i < n; ++i) {
+            end = max(end, words[s[i] - 'a']);
+            if (i == end) {
+                ans.push_back(end - start + 1);
+                start = end + 1;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+## 动态规划
+
+### 爬楼梯
+
+[70. 爬楼梯（简单）](https://leetcode.cn/problems/climbing-stairs/)
+
+问题：假设你正在爬楼梯。需要 `n` 阶你才能到达楼顶。每次你可以爬 `1` 或 `2` 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+
+思路：动态规划。考虑最后一步可能跨了一级台阶，也可能跨了两级台阶，它意味着爬到第 _x_ 级台阶的方案数是爬到第 *x*−1 级台阶的方案数和爬到第 *x*−2 级台阶的方案数的和。
+
+优化：使用滚动数组，优化空间复杂度。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int climbStairs(int n) {
+        int p = 0, q = 0, r = 1;
+        for (int i = 1; i <= n; ++i) {
+            p = q;
+            q = r;
+            r = p + q;
+        }
+        return r;
+    }
+};
+```
+
+### 杨辉三角
+
+[118. 杨辉三角（简单）](https://leetcode.cn/problems/pascals-triangle/)
+
+问题：给定一个非负整数`numRows`，生成「杨辉三角」的前`numRows`行。
+
+思路：动态规划。
+
+复杂度分析：
+
+-   时间复杂度：$O(numRows^2)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> generate(int numRows) {
+        vector<vector<int>> ans;
+        for (int i = 0; i < numRows; ++i) {
+            vector<int> row(i + 1, 1);
+            for (int j = 1; j < i; ++j) {
+                row[j] = ans[i - 1][j - 1] + ans[i - 1][j];
+            }
+            ans.emplace_back(row);
+        }
+        return ans;
+    }
+};
+```
+
+### 打家劫舍
+
+[198. 打家劫舍（中等）](https://leetcode.cn/problems/house-robber/)
+
+问题：每间房内都藏有一定的现金，影响你偷窃的唯一制约因素就是相邻的房屋装有相互连通的防盗系统，如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警。给定一个代表每个房屋存放金额的非负整数数组，计算你不触动警报装置的情况下，一夜之内能够偷窃到的最高金额。
+
+思路：动态规划。到第 i 间房屋时，有偷和不偷两个选项。因此，前 i 间房屋能偷盗的最大金额 $dp[i]=\max (dp[i-2]+nums[i],dp[i-1])$，边界条件为前两间房屋选择金额较高的一间。
+
+优化：用滚动数组优化空间复杂度。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+        if (nums.empty()) {
+            return 0;
+        }
+        int size = nums.size();
+        if (size == 1) {
+            return nums[0];
+        }
+        int first = nums[0], second = max(nums[0], nums[1]);
+        for (int i = 2; i < size; i++) {
+            int temp = second;
+            second = max(first + nums[i], second);
+            first = temp;
+        }
+        return second;
+    }
+};
+```
+
+### 完全平方数
+
+[279. 完全平方数（中等）](https://leetcode.cn/problems/perfect-squares/)
+
+问题：给你一个整数 `n` ，返回和为 `n` 的完全平方数的最少数量。
+
+思路：动态规划。
+
+复杂度分析：
+
+-   时间复杂度：$O(n\sqrt n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> f(n + 1);
+        for (int i = 1; i <= n; i++) {
+            int minn = INT_MAX;
+            for (int j = 1; j * j <= i; j++) {
+                minn = min(minn, f[i - j * j]);
+            }
+            f[i] = minn + 1;
+        }
+        return f[n];
+    }
+};
+```
+
+### 零钱兑换
+
+[322. 零钱兑换（中等）](https://leetcode.cn/problems/coin-change/)
+
+问题：给你一个整数数组 `coins` ，表示不同面额的硬币；以及一个整数 `amount` ，表示总金额。计算并返回可以凑成总金额所需的最少的硬币个数。
+
+思路：动态规划。
+
+复杂度分析：
+
+-   时间复杂度：$O(Sn)$
+-   空间复杂度：$O(S)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        vector<int> dp(amount + 1, amount + 1);  // MAX如果取INT_MAX会导致+1后溢出
+        dp[0] = 0;
+        for (int i = 1; i <= amount; ++i) {
+            for (const int& coin : coins) {
+                if (i - coin < 0)
+                    continue;
+                dp[i] = min(dp[i], dp[i - coin] + 1);
+            }
+        }
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+};
+```
+
+### 单词拆分
+
+[139. 单词拆分（中等）](https://leetcode.cn/problems/word-break/)
+
+问题：给你一个字符串 `s` 和一个字符串列表 `wordDict` 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 `s` 则返回 `true`。
+
+思路：动态规划。从前往后计算考虑转移方程，每次转移的时候需要枚举每一个单词，检查起始点是否合法及子串是否等于该单词。
+
+复杂度分析：
+
+-   时间复杂度：$O(Sn)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        int n = s.size();
+        vector<int> dp(n + 1, 0);
+        dp[0] = 1;
+        for (int i = 1; i <= n; ++i) {
+            for (const string& str : wordDict) {
+                int k = str.size();
+                if (k <= i) {
+                    if (dp[i - k] && s.substr(i - k, k) == str) {
+                        dp[i] = 1;
+                        break;
+                    }
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+### 最长递增子序列
+
+[300. 最长递增子序列（中等）](https://leetcode.cn/problems/longest-increasing-subsequence/)
+
+问题：给你一个整数数组 `nums` ，找到其中最长严格递增子序列的长度。
+
+思路：动态规划。规定`dp[i]`为第 i 个元素结尾的递增子序列的长度，每次遍历前面所有元素进行更新。
+
+复杂度分析：
+
+-   时间复杂度：$O(n^2)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        int n = (int)nums.size();
+        if (n == 0) {
+            return 0;
+        }
+        vector<int> dp(n, 0);
+        for (int i = 0; i < n; ++i) {
+            dp[i] = 1;
+            for (int j = 0; j < i; ++j) {
+                if (nums[j] < nums[i]) {
+                    dp[i] = max(dp[i], dp[j] + 1);
+                }
+            }
+        }
+        return *max_element(dp.begin(), dp.end());
+    }
+};
+```
+
+### 乘积最大子数组
+
+[152. 乘积最大子数组（中等）](https://leetcode.cn/problems/maximum-product-subarray/)
+
+问题：给你一个整数数组 `nums` ，请你找出数组中乘积最大的非空连续子数组（该子数组中至少包含一个数字），并返回该子数组所对应的乘积。
+
+思路：动态规划。维护两个动态数组$f_{max}$和$f_{min}$，有状态转移方程:
+
+$$
+f_{max}(i)=\max(f_{max}(i-1)*a(i),f_{min}(i-1)*a(i),a(i))\\
+f_{min}(i)=\min(f_{max}(i-1)*a(i),f_{min}(i-1)*a(i),a(i))
+$$
+
+优化：使用滚动数组优化空间复杂度。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int maxProduct(vector<int>& nums) {
+        int maxF = nums[0], minF = nums[0], ans = nums[0];
+        for (int i = 1; i < nums.size(); ++i) {
+            int tmpmax = maxF, tmpmin = minF;
+            maxF = max(tmpmax * nums[i], max(tmpmin * nums[i], nums[i]));
+            minF = min(tmpmax * nums[i], min(tmpmin * nums[i], nums[i]));
+            ans = max(ans, maxF);
+        }
+        return ans;
+    }
+};
+```
+
+### 分割等和子集
+
+[416. 分割等和子集（中等）](https://leetcode.cn/problems/partition-equal-subset-sum/)
+
+问题：给你一个只包含正整数的非空数组 `nums` 。请你判断是否可以将这个数组分割成两个子集，使得两个子集的元素和相等。
+
+思路：将问题转化为 `0-1背包` 问题，定义 dp[i, target] 为“能否从 nums[0] 到 nums[i] 中选出和为 target 的子集”，有状态转移方程：
+
+$$
+dp(i,target) = \begin{cases}
+dp(i-1,target) \lor dp(i-1,target-nums(i)), & target \geq nums(i) \\
+dp(i-1,target), & target < nums(i)
+\end{cases}
+$$
+
+优化：可以发现在计算 dp 的过程中，每一行的 dp 值都只与上一行的 dp 值有关，因此只需要一个一维数组即可将空间复杂度降到 $O(target)$。此时状态转移方程为
+
+$$
+dp(target)=dp(target) \lor dp(target-nums(i))
+$$
+
+复杂度分析：
+
+-   时间复杂度：$O(n*target)$
+-   空间复杂度：$O(target)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int n = nums.size();
+        int sum = accumulate(nums.begin(), nums.end(), 0);
+        if (sum & 1)
+            return false;
+        int target = sum / 2;
+        if (target < *max_element(nums.begin(), nums.end()))
+            return false;
+
+        vector<int> dp(target + 1, 0);
+        dp[0] = 1;
+        for (int i = 0; i < n; ++i) {
+            int num = nums[i];
+            for (int j = target; j >= num; --j)  // 从大到小计算，否则dp[j - num]就不是上一层的状态了
+                dp[j] |= dp[j - num];
+        }
+        return dp[target];
+    }
+};
+```
+
+### 最长有效括号
+
+[32. 最长有效括号（困难）](https://leetcode.cn/problems/longest-valid-parentheses/)
+
+问题：给你一个只包含 `'('` 和 `')'` 的字符串，找出最长有效（格式正确且连续）括号子串的长度。
+
+思路：定义 dp[i] 为以下标 i 字符为结尾的最长有效括号的长度，有状态转移方程：
+
+$$
+dp(i) = \begin{cases}
+dp(i-2)+2, & s(i)=')' \and s(i-1)='(' \\
+dp(i-1)+dp(i-dp(i-1)-2)+2, & s(i)=')' \and s(i-1)=')' \and s(i-dp(i-1)-1)='('\\
+0, & else
+\end{cases}
+$$
+
+优化：用一个额外空间 dp[0] 来减少边界条件的判断。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        int n = s.size();
+        vector<int> dp(n + 1, 0);
+        for (int i = 1; i < n; ++i) {
+            if (s[i] == ')') {
+                if (s[i - 1] == '(') {
+                    dp[i + 1] = dp[i - 1] + 2;
+                } else if (i - dp[i] > 0 && s[i - dp[i] - 1] == '(') {
+                    dp[i + 1] = dp[i] + dp[i - dp[i] - 1] + 2;
+                }
+            }
+        }
+        return *max_element(dp.begin(), dp.end());
+    }
+};
+```
+
+## 多维动态规划
+
+### 不同路径
+
+[62. 不同路径（中等）](https://leetcode.cn/problems/unique-paths/)
+
+问题：一个机器人位于一个 `m x n` 网格的左上角 （起始点在下图中标记为 “Start” ）。机器人每次只能向下或者向右移动一步。机器人试图达到网格的右下角（在下图中标记为 “Finish” ）。问总共有多少条不同的路径？
+
+思路：定义`dp[i][j]`为第 i 行第 j 列的走法，有状态转移方程：
+
+$$
+dp(i,j)=dp(i-1,j)+dp(i,j-1)
+$$
+
+优化：使用滚动数组优化空间复杂度。
+
+复杂度分析：
+
+-   时间复杂度：$O(n*m)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int uniquePaths(int m, int n) {
+        vector<int> dp(n + 1, 0);
+        dp[1] = 1;
+        for (int i = 1; i <= m; ++i)
+            for (int j = 1; j <= n; ++j)
+                dp[j] += dp[j - 1];
+        return dp[n];
+    }
+};
+```
+
+### 最小路径和
+
+[64. 最小路径和（中等）](https://leetcode.cn/problems/minimum-path-sum/)
+
+问题：给定一个包含非负整数的 `m x n` 网格 `grid` ，每次只能向下或者向右移动一步。请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
+
+思路：定义`dp[i][j]`为第 i 行第 j 列的路径和，有状态转移方程：
+
+$$
+dp(i,j)=\min(dp(i-1,j),dp(i,j-1))+grid(i,j)
+$$
+
+优化：使用滚动数组优化空间复杂度。
+
+复杂度分析：
+
+-   时间复杂度：$O(n*m)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        int m = grid.size(), n = grid[0].size();
+        vector<int> dp(n, 0);
+        for (int i = 0; i < m; ++i)
+            for (int j = 0; j < n; ++j) {
+                if (j == 0)
+                    dp[j] += grid[i][j];
+                else if (i == 0)
+                    dp[j] = dp[j - 1] + grid[i][j];
+                else
+                    dp[j] = min(dp[j], dp[j - 1]) + grid[i][j];
+            }
+        return dp[n - 1];
+    }
+};
+```
+
+### 最长回文子串
+
+[5. 最长回文子串（中等）](https://leetcode.cn/problems/longest-palindromic-substring/)
+
+问题：给你一个字符串 `s`，找到 `s` 中最长的回文子串。
+
+思路：动态规划。定义 P(i, j) 为第 i 个到第 j 个字符是否为回文串，有状态转移方程：
+
+$$
+P(i,j)=P(i+1,j-1) \and (S_i==S_j)
+$$
+
+复杂度分析：
+
+-   时间复杂度：$O(n^2)$
+-   空间复杂度：$O(n^2)$
+
+思路：中心扩展算法。枚举所有的回文中心（包括长度为 1 和长度为 2 的中心），向两边扩展。
+
+复杂度分析：
+
+-   时间复杂度：$O(n^2)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        int begin = 0, length = 0;
+        for (int i = 0; i < s.size(); ++i) {
+            auto [begin1, length1] = expandAroundCenter(s, i, i);
+            auto [begin2, length2] = expandAroundCenter(s, i, i + 1);
+            if (length1 > length) {
+                begin = begin1;
+                length = length1;
+            }
+            if (length2 > length) {
+                begin = begin2;
+                length = length2;
+            }
+        }
+        return s.substr(begin, length);
+    }
+
+private:
+    pair<int, int> expandAroundCenter(const string& s, int left, int right) {
+        while (left >= 0 && right < s.size() && s[left] == s[right]) {
+            left--;
+            right++;
+        }
+        return {left + 1, right - left - 1};
+    }
+};
+```
+
+### 最长公共子序列
+
+[1143. 最长公共子序列（中等）](https://leetcode.cn/problems/longest-common-subsequence/)
+
+问题：给定两个字符串 `text1` 和 `text2`，返回这两个字符串的最长公共子序列的长度。如果不存在公共子序列，返回 `0` 。
+
+思路：动态规划。定义 P(i, j) 为 text1 [0, i] 和 text2 [0, j] 的最长公共子序列长度，有状态转移方程：
+
+$$
+dp(i，j) = \begin{cases}
+dp(i-1,j-1)+1, & text1[i]=text2[j]\\
+\max(dp(i-1,j),dp(i,j-1)), & otherwise
+\end{cases}
+$$
+
+复杂度分析：
+
+-   时间复杂度：$O(mn)$
+-   空间复杂度：$O(mn)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int longestCommonSubsequence(string text1, string text2) {
+        int m = text1.size(), n = text2.size();
+        vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+        for (int i = 1; i <= m; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                if (text1[i - 1] == text2[j - 1])
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+                else
+                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
+### 编辑距离
+
+[72. 编辑距离（困难）](https://leetcode.cn/problems/edit-distance/)
+
+问题：给你两个单词 `word1` 和 `word2`，请返回将 `word1` 转换成 `word2` 所使用的最少操作数。
+
+思路：本质不同的操作实际上只有三种：
+
+1. 在单词 `A` 中插入一个字符，即`dp[i][j]=dp[i-1][j]+1`；
+2. 在单词 `B` 中插入一个字符，即`dp[i][j]=dp[i][j-1]+1`；
+3. 修改单词 `A` 的一个字符。若字母相等，则不用修改，有`dp[i][j]=dp[i-1][j-1]`；若不等，有`dp[i][j]=dp[i-1][j-1]+1`。
+
+定义 dp(i, j) 为 word1 [0, i] 和 word2 [0, j] 的编辑距离，在三种操作中取操作数最少的一种，有状态转移方程：
+
+$$
+dp(i，j) = \begin{cases}
+1+min(dp(i,j-1),dp(i-1,j),dp(i-1,j-1)-1), & word1[i]=word2[j]\\
+1+min(dp(i,j-1),dp(i-1,j),dp(i-1,j-1)), & word1[i]\neq word2[j]
+\end{cases}
+$$
+
+复杂度分析：
+
+-   时间复杂度：$O(mn)$
+-   空间复杂度：$O(mn)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        int m = word1.size(), n = word2.size();
+        vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+        // 初始化
+        for (int i = 0; i <= m; ++i)
+            dp[i][0] = i;
+        for (int j = 0; j <= n; ++j)
+            dp[0][j] = j;
+        for (int i = 1; i <= m; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                dp[i][j] =
+                    word1[i - 1] == word2[j - 1]
+                        ? 1 + min(dp[i][j - 1],
+                                  min(dp[i - 1][j], dp[i - 1][j - 1] - 1))
+                        : 1 + min(dp[i][j - 1],
+                                  min(dp[i - 1][j], dp[i - 1][j - 1]));
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
+## 技巧
+
+### 只出现一次的数字
+
+[136. 只出现一次的数字（简单）](https://leetcode.cn/problems/single-number/)
+
+问题：给你一个非空整数数组 `nums` ，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
+
+思路：数组中的全部元素的**异或**运算结果即为数组中只出现一次的数字。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int ret = 0;
+        for (auto e: nums) ret ^= e;
+        return ret;
+    }
+};
+```
+
+### 多数元素
+
+[169. 多数元素（简单）](https://leetcode.cn/problems/majority-element/)
+
+问题：给定一个大小为 `n` 的数组 `nums` ，返回其中的多数元素。多数元素是指在数组中出现次数大于`⌊ n/2 ⌋` 的元素。
+
+思路：Boyer-Moore 投票算法。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int majorityElement(vector<int>& nums) {
+        int candidate = -1;
+        int count = 0;
+        for (int num : nums) {
+            if (num == candidate)
+                ++count;
+            else if (--count < 0) {
+                candidate = num;
+                count = 1;
+            }
+        }
+        return candidate;
+    }
+};
+```
+
+### 颜色分类
+
+[75. 颜色分类（中等）](https://leetcode.cn/problems/sort-colors/)
+
+问题：给定一个包含红色、白色和蓝色、共 `n` 个元素的数组 `nums` ，原地对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
+
+思路：双指针。遍历数组，将`0`交换到左边，将`2`交换到右边。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int p = 0, q = nums.size() - 1;
+        for (int i = 0; i <= q; ++i) {
+            if (nums[i] == 0) {
+                swap(nums[i], nums[p++]);  // 剪枝：已经遍历过的元素是有序的，不可能存在2
+            }
+            if (nums[i] == 2) {
+                swap(nums[i], nums[q--]);
+                if (nums[i] != 1)
+                    --i;  // 考虑从后面交换来的元素可能为0或2，需要重新判断
+            }
+        }
+    }
+};
+```
+
+### 下一个排列
+
+[31. 下一个排列（中等）](https://leetcode.cn/problems/next-permutation/)
+
+问题：整数数组的一个排列就是将其所有成员以序列或线性顺序排列。给你一个整数数组 `nums` ，找出 `nums` 的下一个排列。
+
+思路：将一个左边的「较小数」与一个右边的「较大数」交换，当交换完成后，「较大数」右边的数需要按照升序重新排列。这样可以在保证新排列大于原来排列的情况下，使变大的幅度尽可能小。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    void nextPermutation(vector<int>& nums) {
+        int i = nums.size() - 2;
+        while (i >= 0 && nums[i] >= nums[i + 1]) {
+            i--;
+        }
+        if (i >= 0) {
+            int j = nums.size() - 1;
+            while (j >= 0 && nums[i] >= nums[j]) {
+                j--;
+            }
+            swap(nums[i], nums[j]);
+        }
+        reverse(nums.begin() + i + 1, nums.end());
+    }
+};
+```
+
+### 寻找重复数
+
+[287. 寻找重复数（中等）](https://leetcode.cn/problems/find-the-duplicate-number/)
+
+问题：给定一个包含 `n + 1` 个整数的数组 `nums` ，其数字都在 `[1, n]` 范围内（包括 `1` 和 `n`），可知至少存在一个重复的整数。假设只有一个重复的整数，找到这个重复的数。
+
+思路：位运算。统计 `[1, n]` 范围内每一位 1 的总数，再统计 `nums` 每一位 1 的总数。如果后者在某一位的 1 数量更多，则答案中对应位置为 1 。
+
+复杂度分析：
+
+-   时间复杂度：$O(n \log n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int n = nums.size(), bit_max = 31, res = 0;
+        while (!((n - 1) >> bit_max)) {
+            --bit_max;  // // 确定二进制下最高位是多少
+        }
+        for (int bit = 0; bit <= bit_max; ++bit) {
+            int x = 0, y = 0;
+            for (int i = 1; i < n; ++i) {
+                x += 1 & (i >> bit);
+            }
+            for (int a : nums) {
+                y += 1 & (a >> bit);
+            }
+            if (x < y)
+                res |= 1 << bit;
+        }
+        return res;
+    }
+};
+```
+
+思路：快慢指针。对 nums 数组建图，每个位置 i 连一条 i→nums[i] 的边。由于存在的重复的数字 target，因此 target 这个位置一定有起码两条指向它的边，因此整张图一定存在环，且要找到的 target 就是这个环的入口，那么整个问题就等价于找到环的入口。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int slow = 0, fast = 0;
+        do {
+            slow = nums[slow];
+            fast = nums[nums[fast]];
+        } while (slow != fast);
+        slow = 0;
+        while (slow != fast) {
+            slow = nums[slow];
+            fast = nums[fast];
+        }
+        return slow;
+    }
+};
+```

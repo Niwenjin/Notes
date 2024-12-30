@@ -195,10 +195,10 @@ plugins=(git zsh-autosuggestions zsh-completions zsh-syntax-highlighting z extra
 
 rsync 可用于备份数据。
 
-用 rsync 备份系统到 USB 驱动器：
+用 rsync 备份系统到目标目录：
 
 ```sh
-$ sudo rsync -aAXv --delete --exclude=/dev/ --exclude=/proc/ --exclude=/sys/ --exclude=/tmp/ --exclude=/run/ --exclude=/mnt/ --exclude=/media/ --exclude="swapfile" --exclude="lost+found" --exclude=".cache" --exclude="Downloads" --exclude="Documents" --exclude="miniconda3" --exclude="Proj" --exclude="Pictures" --exclude="Music" --exclude=".VirtualBoxVMs"--exclude=".ecryptfs" / /run/media/younis/younisx
+$ sudo rsync -aAXHv --delete --exclude='/dev/*' --exclude='/proc/*' --exclude='/sys/*' --exclude='/tmp/*' --exclude='/run/*' --exclude='/mnt/*' --exclude='/media/*' --exclude='/lost+found/' --exclude='Desktop' --exclude='Downloads' --exclude='Music' --exclude='Pictures' --exclude='Public' --exclude='Templates' --exclude='tigo' --exclude='Videos' --exclude='.cache' --exclude='miniconda3' / /path/to/backup
 ```
 
 选项：
@@ -212,15 +212,15 @@ $ sudo rsync -aAXv --delete --exclude=/dev/ --exclude=/proc/ --exclude=/sys/ --e
 
 –A、-a 和 –X 标志一起通过维护文件的属性来保护文件的完整性。
 
-然后是–delete选项，它指示仅备份目标中尚未存在的那些文件（在我们的例子中是USB）。–delete 在使用时应采取充分的预防措施，因为更新版本源中的文件替换（覆盖）目标中的旧版本。
+--delete 替换（覆盖）目标中的旧版本。
 
 –dry-run 选项将所有这些保留在模拟中。
 
--exclude 标志用于忽略一些要备份的文件夹。在上面的命令中，我省略了 /dev/、/proc/、/proc/ /sys/ /tmp/ /run/ /mnt/ 和 /media 文件夹。这只是为了证明，它们的排除（/mnt/ 除外）是不必要的，因为它们的内容不会由 rsync 自动备份。
+-exclude 标志用于忽略一些要备份的文件夹。在上述命令中，/dev、/proc、/sys、/tmp和/run 等目录被包括在内，但这些目录的内容被排除在外。这是因为它们在系统启动时才会被填入内容，但这些目录本身不会被创建。/lost+found 是针对文件系统的。如果计划将系统备份到 /mnt 或 /media 以外的其他位置，请不要忘记将其添加到排除的模式列表中，以避免无限循环。
 
 /- 指定我们要备份的内容
 
-/run/media/younis/younisx 是您要备份到的目录。
+/run/media/younis/younisx 是要备份到的目录。
 ```
 
 备份完成后，可以从移动硬盘恢复系统。
@@ -228,7 +228,7 @@ $ sudo rsync -aAXv --delete --exclude=/dev/ --exclude=/proc/ --exclude=/sys/ --e
 首先，我们将从 Live ISO 和插件启动系统并安装备份驱动器。然后我们将登录并为备份驱动器上的内容创建一个文件夹，并为硬盘上的内容创建另一个文件夹。
 
 ```sh
-$mkdir /mnt/system /mnt/usb
+$mkdir /mnt/root /mnt/backup
 ```
 
 然后查找互连设备的名称：
@@ -240,13 +240,13 @@ $ lsblk
 通过运行以下命令挂载文件系统和备份：
 
 ```sh
-$ mount /dev/sda1 /mnt/system
+$ mount /dev/sda1 /mnt/root
 
-$ mount /dev/sdb1 /mnt/usb
+$ mount /dev/sdb1 /mnt/backup
 ```
 
 然后使用以下命令恢复备份：
 
 ```sh
-$ rsync -aAXv --delete --exclude="lost+found" /mnt/usb/ /mnt/system/
+$ rsync -aAXv --delete --exclude="lost+found" /mnt/backup/ /mnt/root/
 ```

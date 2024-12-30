@@ -26,6 +26,10 @@
 
 [CIFAR-10](tasks/cifar-10/cifar-10.md)
 
+[Mermaid](tools/Mermaid/mermaid.md)
+
+[Transformers](AI/Transformers/transformers.md)
+
 ## 读书笔记
 
 [C++ Primer](cpp/C++Primer/C++Primer.md)
@@ -60,12 +64,24 @@
 
 [现代 C++ 语言核心特性解析](cpp/modernc++.md)
 
+[深入理解 Linux 网络：修炼底层内功，掌握高性能原理](system/LinuxNetwork/LinuxNetwork.md)
+
+[Qt 6 C++ 开发指南](tools/Qt/qt6.md)
+
 ## 论文阅读
 
-[The Google File System](paper/GFS/gfs.md)
+分布式存储
 
-Ceph
+> [The Google File System](paper/GFS/gfs.md)
+> 
+> Ceph
+>
+> -   [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)
+> -   [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
+> -   [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
 
--   [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)
--   [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
--   [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
+[目标检测](paper/Detection/detection.md)
+
+[多模态](paper/Multimodal/multimodal.md)
+
+[视频理解](paper/Video/video.md)
