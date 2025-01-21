@@ -1,5 +1,15 @@
 # Transformers
 
+## HF-Mirror
+
+[Transformers 镜像](https://hf-mirror.com/)
+
+使用镜像站加速模型和数据集的下载：
+
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
+```
+
 ## 基础组件
 
 ### Pipeline
@@ -310,7 +320,7 @@ Trainer 封装了完整的训练、评估逻辑，并集成了多种后端，可
 9. 模型训练、评估 --> Trainer
 10. 模型推理 --> Pipeline
 
-### 显存优化
+### 显存优化：PEFT
 
 显存占用分析：
 
@@ -323,3 +333,56 @@ Trainer 封装了完整的训练、评估逻辑，并集成了多种后端，可
 
 1. 冻结参数微调（BitFit）
 2. 低精度训练
+
+## Models
+
+### ViT
+
+```mermaid
+---
+title: ViT
+---
+flowchart LR
+input(Image) --> tokenize[ViTEmbeddings] --Embdeddings--> model[ViTModel] --token--> head["Task head"] --> output(output)
+```
+
+关键组件：
+
+- ViTEmbeddings：负责将输入图像转换为适合 Transformer 模型处理的嵌入表示。
+
+  ```mermaid
+  ---
+  title: ViTEmbeddings
+  ---
+  flowchart LR
+  id1("(8, 3, 224, 224)") --Conv2d--> id2("(8, 768, 14, 14)") --flat & transpose--> id4("(8, 196, 768)") --"CLS token"--> id5("(8, 197, 768)") --"pos embedding"--> id6("(8, 197, 768)")
+  ```
+
+  1. 将输入图像通过卷积、展开和转置操作，转换为 patch embeddings。
+  2. 在 patch embeddings 的开头添加一个可学习的 CLS token，用于分类任务。
+  3. 为每个 embeddings 添加**位置编码**，以保留位置信息。
+  4. 最后 Embdeddings 经过 dropout 层，作为 Transformer 的输入。
+
+- ViTLayer：它集成了自注意力机制（`ViTAttention`）、前馈神经网络（`ViTIntermediate` 和 `ViTOutput`）以及 Layer Normalization，并实现了残差连接，对应 Transformer 的一个完整块（Block）。
+
+  ```mermaid
+  ---
+  title: ViTLayer
+  ---
+  flowchart LR
+  id1(hidden_states) --SelfAttention--> id2[AttentionOutput] --> id3[output] --LayerNorm--> id4[output] --linear--> id5[output] --LayerNorm--> id6[output]
+  id1 --residual connection--> id3
+  id3 --residual connection--> id6
+  
+  ```
+
+  - ViTAttention：用于实现完整的自注意力机制及其后续处理。
+    1. **自注意力层**计算注意力分数并生成加权输出。
+    2. **输出层**对自注意力机制的输出进行线性变换和残差连接。
+  - ViTIntermediate：用于实现 Transformer 块中的前馈神经网络（Feed-Forward Network, FFN）的中间层。
+  - ViTOutput：用于实现 Transformer 块中前馈神经网络（Feed-Forward Network, FFN）的输出层。
+
+- ViTModel：实现了 ViT 的完整前向传播逻辑，包括嵌入层、编码器和可选的池化层。
+
+  - ViTEncoder：堆叠多个 Transformer 块实现完整的编码器。
+  - ViTPooler：对编码器输出的第一个 token（通常是分类 token，`[CLS]`）进行线性变换和激活函数处理，生成池化后的特征表示。

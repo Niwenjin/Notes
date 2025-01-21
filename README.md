@@ -85,3 +85,5 @@
 [多模态](paper/Multimodal/multimodal.md)
 
 [视频理解](paper/Video/video.md)
+
+[NL2SQL](paper/NL2SQL/nl2sql.md)

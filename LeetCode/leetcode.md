@@ -95,6 +95,98 @@ public:
 };
 ```
 
+### 单词规律
+
+[290. 单词规律（简单）](https://leetcode.cn/problems/word-pattern/)
+
+问题：给定一种规律 `pattern` 和一个字符串 `s` ，判断 `s` 是否遵循相同的规律。
+
+思路：在集合论中，这种关系被称为「双射」。可以利用哈希表记录每一个字符对应的字符串，以及每一个字符串对应的字符。
+
+_提示：使用 `istringstream` 将字符串转为流，可以提取出空格分割的单词。_
+
+复杂度分析：
+
+-   时间复杂度：$O(m+n)$
+-   空间复杂度：$O(m+n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool wordPattern(string pattern, string s) {
+        unordered_map<char, string> ctw;
+        unordered_map<string, char> wtc;
+        istringstream iss(s);
+        string word;
+        for (char c : pattern) {
+            if (!(iss >> word) || (ctw.count(c) && ctw[c] != word) ||
+                (wtc.count(word) && wtc[word] != c))
+                return false;
+            ctw[c] = word;
+            wtc[word] = c;
+        }
+        return !(iss >> word);
+    }
+};
+```
+
+### O(1) 时间插入、删除和获取随机元素
+
+[380. O(1) 时间插入、删除和获取随机元素（中等）](https://leetcode.cn/problems/insert-delete-getrandom-o1/)
+
+问题：实现一个类，能 O(1) 时间插入、删除和获取随机元素。
+
+思路：哈希表 + 变长数组。哈希表存储元素在数组中的下标，删除元素时，将最后一个元素移动到要删除的元素位置，然后删除数组的最后一个元素。
+
+复杂度分析：
+
+-   时间复杂度：$O(1)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class RandomizedSet {
+public:
+    RandomizedSet() {
+        srand((unsigned)time(NULL));
+    }
+
+    bool insert(int val) {
+        if (indices.count(val)) {
+            return false;
+        }
+        int index = nums.size();
+        nums.emplace_back(val);
+        indices[val] = index;
+        return true;
+    }
+
+    bool remove(int val) {
+        if (!indices.count(val)) {
+            return false;
+        }
+        int index = indices[val];
+        int last = nums.back();
+        nums[index] = last;
+        indices[last] = index;
+        nums.pop_back();
+        indices.erase(val);
+        return true;
+    }
+
+    int getRandom() {
+        int randomIndex = rand()%nums.size();
+        return nums[randomIndex];
+    }
+private:
+    vector<int> nums;
+    unordered_map<int, int> indices;
+};
+```
+
 ## 双指针
 
 ### 移动零
@@ -162,6 +254,40 @@ public:
             }
         }
         return ans;
+    }
+};
+```
+
+### 颜色分类
+
+[75. 颜色分类（中等）](https://leetcode.cn/problems/sort-colors/)
+
+问题：给定一个包含红色、白色和蓝色、共 `n` 个元素的数组 `nums` ，原地对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
+
+思路：双指针。遍历数组，将`0`交换到左边，将`2`交换到右边。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int p = 0, q = nums.size() - 1;
+        for (int i = 0; i <= q; ++i) {
+            if (nums[i] == 0) {
+                swap(nums[i], nums[p++]);  // 剪枝：已经遍历过的元素是有序的，不可能存在2
+            }
+            if (nums[i] == 2) {
+                swap(nums[i], nums[q--]);
+                if (nums[i] != 1)
+                    --i;  // 考虑从后面交换来的元素可能为0或2，需要重新判断
+            }
+        }
     }
 };
 ```
@@ -235,7 +361,7 @@ public:
 -   时间复杂度：$O(N)$
 -   空间复杂度：$O(1)$
 
-实现：
+实现（背诵）：
 
 ```cpp
 class Solution {
@@ -256,6 +382,36 @@ public:
             }
         }
         return ans;
+    }
+};
+```
+
+### 合并两个有序数组
+
+[88. 合并两个有序数组（简单）](https://leetcode.cn/problems/merge-sorted-array/)
+
+问题：给你两个按非递减顺序排列的整数数组 `nums1` 和 `nums2`，另有两个整数 `m` 和 `n` ，分别表示 `nums1` 和 `nums2` 中的元素数目。请你合并`nums2` 到 `nums1` 中，使合并后的数组同样按非递减顺序排列。
+
+思路：逆向双指针。从后往前更新数组，避免了覆盖原数组中前面的元素。
+
+复杂度分析：
+
+-   时间复杂度：$O(m+n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        int p1 = m - 1, p2 = n - 1, i = m + n - 1;
+        while (p1 >= 0 && p2 >= 0) {
+            nums1[i--] = nums1[p1] > nums2[p2] ? nums1[p1--] : nums2[p2--];
+        }
+        while (p2 >= 0) {
+            nums1[i--] = nums2[p2--];
+        }
     }
 };
 ```
@@ -301,6 +457,108 @@ public:
             ans = max(ans, rk - i + 1);
         }
         return ans;
+    }
+};
+```
+
+### 串联所有单词的子串
+
+[30. 串联所有单词的子串（困难）](https://leetcode.cn/problems/substring-with-concatenation-of-all-words/)
+
+问题：给定一个字符串 `s` 和一个字符串数组 `words`**。** `words` 中所有字符串长度相同。返回所有串联子串在 `s` 中的开始索引。
+
+思路：滑动窗口。
+
+复杂度分析：
+
+-   时间复杂度：$O(l*n)$
+-   空间复杂度：$O(m*n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<int> findSubstring(string s, vector<string>& words) {
+        int wordSize = words[0].size();  //单词大小
+        int wordNum = words.size();  //单词数量
+        vector<int> res;
+        for (int i = 0; i < wordSize && i + wordSize * wordNum <= s.size();i++)
+        {
+            int left = i;  //初始化滑动窗口左边界
+            int right = i + wordSize * wordNum;  //右边界
+            unordered_map<string, int> wordsMap;  //保存当前窗口与words里单词的次数关系
+            //初始化滑动窗口内单词计数
+            for (int j = left; j < right; j += wordSize)
+                wordsMap[s.substr(j, wordSize)]++;
+            //减去words里出现的次数
+            for (string& word : words)
+            {
+                wordsMap[word]--;
+                if (wordsMap[word] == 0)
+                    wordsMap.erase(word);
+            }
+            //判断初始状态是否满足
+            if (wordsMap.empty())
+                res.push_back(left);
+            while (right < s.size())
+            {
+                //滑动一次，从左边界开始的一个单词需要删除，右边界开始的单词需要加入
+                const string& deleteWord = s.substr(left, wordSize);
+                const string& joinWord = s.substr(right, wordSize);
+                if (--wordsMap[deleteWord] == 0)
+                    wordsMap.erase(deleteWord);
+                if (++wordsMap[joinWord] == 0)
+                    wordsMap.erase(joinWord);
+
+                //滑动之后更新边界，并判断是否满足
+                right += wordSize;
+                left += wordSize;
+                if (wordsMap.empty())
+                    res.push_back(left);
+            }
+        }
+        return res;
+    }
+};
+```
+
+### 长度最小的子数组
+
+[209. 长度最小的子数组（中等）](https://leetcode.cn/problems/minimum-size-subarray-sum/)
+
+问题：给定一个含有 `n` 个正整数的数组和一个正整数 `target` 。找出该数组中满足其总和大于等于 `target` 的长度最小的子数组`[numsl, numsl+1, ..., numsr-1, numsr]` ，并返回其长度**。**如果不存在符合条件的子数组，返回 `0` 。
+
+思路：使用滑动窗口遍历字符串。当窗口中累加和大于等于 `target` 时，右移窗口左边界并更新最小窗口大小；否则右移窗口右边界。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int minSubArrayLen(int s, vector<int>& nums) {
+        int n = nums.size();
+        if (n == 0) {
+            return 0;
+        }
+        int ans = INT_MAX;
+        int start = 0, end = 0;
+        int sum = 0;
+        while (end < n) {
+            sum += nums[end];
+            while (sum >= s) {
+                ans = min(ans, end - start + 1);
+                sum -= nums[start];
+                start++;
+            }
+            end++;
+        }
+        return ans == INT_MAX ? 0 : ans;
     }
 };
 ```
@@ -376,6 +634,47 @@ public:
 ```
 
 ## 子串
+
+### 找出字符串中第一个匹配项的下标
+
+[28. 找出字符串中第一个匹配项的下标（简单）](https://leetcode.cn/problems/find-the-index-of-the-first-occurrence-in-a-string/)
+
+问题：给你两个字符串 `haystack` 和 `needle` ，请你在 `haystack` 字符串中找出 `needle` 字符串的第一个匹配项的下标（下标从 0 开始）。如果 `needle` 不是 `haystack` 的一部分，则返回 `-1` 。
+
+思路：[KMP 算法](https://blog.csdn.net/v_july_v/article/details/7041827)。构建一个被称为部分匹配表(Partial Match Table)的数组，PMT 中的值是字符串的前缀集合与后缀集合的交集中最长元素的长度。为了编程的方便， 我们不直接使用 PMT 数组，而是将 PMT 数组向后偏移一位，把新得到的这个数组称为 next 数组。利用部分匹配的原理，失配时只需要将指针左移 next[j] 位即可。关键在于 next 数组的求法。
+
+复杂度分析：
+
+-   时间复杂度：$O(m+n)$
+-   空间复杂度：$O(m)$
+
+实现（背诵）：
+
+```cpp
+class Solution {
+public:
+    int strStr(string haystack, string needle) {
+        int n = haystack.size(), m = needle.size();
+        vector<int> next(m);
+        for (int i = 1, j = 0; i < m; ++i) {
+            while (j > 0 && needle[i] != needle[j])
+                j = next[j - 1];
+            if (needle[i] == needle[j])
+                ++j;
+            next[i] = j;
+        }
+        for (int i = 0, j = 0; i < n; ++i) {
+            while (j > 0 && haystack[i] != needle[j])
+                j = next[j - 1];
+            if (haystack[i] == needle[j])
+                ++j;
+            if (j == m)
+                return i - m + 1;
+        }
+        return -1;
+    }
+};
+```
 
 ### 和为 K 的子数组
 
@@ -1479,11 +1778,7 @@ private:
             }
             cur = cur->next;
         }
-        if (p) {
-            cur->next = p;
-        } else {
-            cur->next = q;
-        }
+        cur->next = p ? p : q;
         cur = dummy->next;
         delete (dummy);
         return cur;
@@ -3284,6 +3579,55 @@ public:
 };
 ```
 
+### 简化路径
+
+[71. 简化路径（中等）](https://leetcode.cn/problems/simplify-path/)
+
+问题：给你一个字符串 `path` ，表示指向某一文件或目录的 Unix 风格绝对路径（以 `'/'` 开头），请你将其转化为更加简洁的规范路径。
+
+思路：用栈维护路径。将字符串用 '/' 分割为子串，当遇到合法名字时压入栈顶；遇到 ".." 时弹出栈顶元素。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    string simplifyPath(string path) {
+        deque<string> dq{};
+        int n = path.size();
+        for (int i = 0; i < n; ++i) {
+            if (path[i] != '/') {
+                int j = i + 1;
+                while (j < n && path[j] != '/')
+                    ++j;
+                string str = path.substr(i, j - i);
+                if (str == ".") {
+                } else if (str == "..") {
+                    if (!dq.empty())
+                        dq.pop_back();
+                } else {
+                    dq.emplace_back(str);
+                }
+                i = j;
+            }
+        }
+        if (dq.empty())
+            return {'/'};
+        string ans{};
+        for (auto it = dq.begin(); it != dq.end(); ++it) {
+            ans.push_back('/');
+            ans.append(*it);
+        }
+        return ans;
+    }
+};
+```
+
 ### 最小栈
 
 [155. 最小栈（中等）](https://leetcode.cn/problems/min-stack/)
@@ -4298,6 +4642,56 @@ private:
 };
 ```
 
+### 最大正方形
+
+[221. 最大正方形（中等）](https://leetcode.cn/problems/maximal-square/)
+
+问题：在一个由 `'0'` 和 `'1'` 组成的二维矩阵内，找到只包含 `'1'` 的最大正方形，并返回其面积。
+
+思路：动态规划。定义 dp(i, j) 为以 (i, j) 为右下角，且只包含 1 的正方形的边长最大值，有状态转移方程：
+
+$$
+dp[i][j] = \begin{cases}
+min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1])+1, &matrix[i][j]=='1'\\
+0, &otherwise
+\end{cases}
+$$
+
+复杂度分析：
+
+-   时间复杂度：$O(mn)$
+-   空间复杂度：$O(mn)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int maximalSquare(vector<vector<char>>& matrix) {
+        if (matrix.size() == 0 || matrix[0].size() == 0) {
+            return 0;
+        }
+        int maxSide = 0;
+        int rows = matrix.size(), columns = matrix[0].size();
+        vector<vector<int>> dp(rows, vector<int>(columns));
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                if (matrix[i][j] == '1') {
+                    if (i == 0 || j == 0) {
+                        dp[i][j] = 1;
+                    } else {
+                        dp[i][j] = min(min(dp[i - 1][j], dp[i][j - 1]), dp[i - 1][j - 1]) + 1;
+                    }
+                    maxSide = max(maxSide, dp[i][j]);
+                }
+            }
+        }
+        int maxSquare = maxSide * maxSide;
+        return maxSquare;
+    }
+};
+```
+
 ### 最长公共子序列
 
 [1143. 最长公共子序列（中等）](https://leetcode.cn/problems/longest-common-subsequence/)
@@ -4393,7 +4787,70 @@ public:
 };
 ```
 
-## 技巧
+## 模拟
+
+### 罗马数字转整数
+
+[13. 罗马数字转整数（简单）](https://leetcode.cn/problems/roman-to-integer/)
+
+问题：给定一个罗马数字，将其转换成整数。
+
+思路：通常情况下，罗马数字中小的数字在大的数字的右边。若输入的字符串满足该情况，那么可以将每个字符视作一个单独的值，累加每个字符对应的数值即可。若存在小的数字在大的数字的左边的情况，根据规则需要减去小的数字。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int romanToInt(string s) {
+        int num = 0;
+        unordered_map<char, int> map{{'I', 1},   {'V', 5},   {'X', 10},
+                                     {'L', 50},  {'C', 100}, {'D', 500},
+                                     {'M', 1000}};
+        for (int i = 0; i < s.size(); ++i) {
+            num += i < s.size() - 1 && map[s[i]] < map[s[i + 1]] ? -map[s[i]]
+                                                                 : map[s[i]];
+        }
+        return num;
+    }
+};
+```
+
+### 数字转罗马数字
+
+[12. 整数转罗马数字（中等）](https://leetcode.cn/problems/integer-to-roman/)
+
+问题：给定一个整数，将其转换成罗马数字。
+
+思路：硬编码数字。
+
+复杂度分析：
+
+-   时间复杂度：$O(1)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+const string thousands[] = {"", "M", "MM", "MMM"};
+const string hundreds[]  = {"", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"};
+const string tens[]      = {"", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"};
+const string ones[]      = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
+
+class Solution {
+public:
+    string intToRoman(int num) {
+        return thousands[num / 1000] + hundreds[num % 1000 / 100] + tens[num % 100 / 10] + ones[num % 10];
+    }
+};
+```
+
+## 位运算
 
 ### 只出现一次的数字
 
@@ -4420,6 +4877,134 @@ public:
     }
 };
 ```
+
+### 只出现一次的数字 II
+
+[137. 只出现一次的数字 II（中等）](https://leetcode.cn/problems/single-number-ii/)
+
+问题：给你一个整数数组 `nums` ，除某个元素仅出现一次外，其余每个元素都恰出现三次。请你找出并返回那个只出现了一次的元素。
+
+思路：数组中的全部元素的异或运算结果即为数组中只出现一次的数字。
+
+复杂度分析：
+
+-   时间复杂度：$O(n\log C)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int ans = 0;
+        for (int i = 0; i < 32; ++i) {
+            int total = 0;
+            for (int num: nums) {
+                total += ((num >> i) & 1);
+            }
+            if (total % 3) {
+                ans |= (1 << i);
+            }
+        }
+        return ans;
+    }
+};
+```
+
+## 数学
+
+### 直线上最多的点数
+
+[149. 直线上最多的点数（困难）](https://leetcode.cn/problems/max-points-on-a-line/)
+
+问题：给你一个数组 `points` ，其中 `points[i] = [xi, yi]` 表示平面上的一个点。求最多有多少个点在同一条直线上。
+
+思路：`n!` 结果中尾随零的数量只与 n 中因子中有几个 5 有关。
+
+复杂度分析：
+
+-   时间复杂度：$O(n^2 × \log m)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int gcd(int a, int b) {
+        return b ? gcd(b, a % b) : a;
+    }
+
+    int maxPoints(vector<vector<int>>& points) {
+        int n = points.size();
+        if (n <= 2) {
+            return n;
+        }
+        int ret = 0;
+        for (int i = 0; i < n; i++) {
+            if (ret >= n - i || ret > n / 2) {
+                break;
+            }
+            unordered_map<int, int> mp;
+            for (int j = i + 1; j < n; j++) {
+                int x = points[i][0] - points[j][0];
+                int y = points[i][1] - points[j][1];
+                if (x == 0) {
+                    y = 1;
+                } else if (y == 0) {
+                    x = 1;
+                } else {
+                    if (y < 0) {
+                        x = -x;
+                        y = -y;
+                    }
+                    int gcdXY = gcd(abs(x), abs(y));
+                    x /= gcdXY, y /= gcdXY;
+                }
+                mp[y + x * 20001]++;
+            }
+            int maxn = 0;
+            for (auto& [_, num] : mp) {
+                maxn = max(maxn, num + 1);
+            }
+            ret = max(ret, maxn);
+        }
+        return ret;
+    }
+};
+```
+
+### 阶乘后的零
+
+[172. 阶乘后的零（中等）](https://leetcode.cn/problems/factorial-trailing-zeroes/)
+
+问题：给定一个整数 `n` ，返回 `n!` 结果中尾随零的数量。
+
+思路：`n!` 结果中尾随零的数量只与 n 中因子中有几个 5 有关。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int trailingZeroes(int n) {
+        int ans = 0;
+        while (n) {
+            n /= 5;
+            ans += n;
+        }
+        return ans;
+    }
+};
+```
+
+## 技巧
 
 ### 多数元素
 
@@ -4455,40 +5040,6 @@ public:
 };
 ```
 
-### 颜色分类
-
-[75. 颜色分类（中等）](https://leetcode.cn/problems/sort-colors/)
-
-问题：给定一个包含红色、白色和蓝色、共 `n` 个元素的数组 `nums` ，原地对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
-
-思路：双指针。遍历数组，将`0`交换到左边，将`2`交换到右边。
-
-复杂度分析：
-
--   时间复杂度：$O(n)$
--   空间复杂度：$O(1)$
-
-实现：
-
-```cpp
-class Solution {
-public:
-    void sortColors(vector<int>& nums) {
-        int p = 0, q = nums.size() - 1;
-        for (int i = 0; i <= q; ++i) {
-            if (nums[i] == 0) {
-                swap(nums[i], nums[p++]);  // 剪枝：已经遍历过的元素是有序的，不可能存在2
-            }
-            if (nums[i] == 2) {
-                swap(nums[i], nums[q--]);
-                if (nums[i] != 1)
-                    --i;  // 考虑从后面交换来的元素可能为0或2，需要重新判断
-            }
-        }
-    }
-};
-```
-
 ### 下一个排列
 
 [31. 下一个排列（中等）](https://leetcode.cn/problems/next-permutation/)
@@ -4520,6 +5071,86 @@ public:
             swap(nums[i], nums[j]);
         }
         reverse(nums.begin() + i + 1, nums.end());
+    }
+};
+```
+
+### Pow(x, n)
+
+[50. Pow(x, n)（中等）](https://leetcode.cn/problems/powx-n/)
+
+问题：实现 pow(x, n)。
+
+思路：使用分治法实现快速幂。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    double quickMul(double x, long long N) {
+        double ans = 1.0;
+        // 贡献的初始值为 x
+        double x_contribute = x;
+        // 在对 N 进行二进制拆分的同时计算答案
+        while (N > 0) {
+            if (N % 2 == 1) {
+                // 如果 N 二进制表示的最低位为 1，那么需要计入贡献
+                ans *= x_contribute;
+            }
+            // 将贡献不断地平方
+            x_contribute *= x_contribute;
+            // 舍弃 N 二进制表示的最低位，这样我们每次只要判断最低位即可
+            N /= 2;
+        }
+        return ans;
+    }
+
+    double myPow(double x, int n) {
+        long long N = n;
+        return N >= 0 ? quickMul(x, N) : 1.0 / quickMul(x, -N);
+    }
+};
+```
+
+### 快乐数
+
+[202. 快乐数（简单）](https://leetcode.cn/problems/happy-number/)
+
+问题：对于一个正整数，每一次将该数替换为它每个位置上的数字的平方和，然后重复这个过程直到这个数变为 1 ，那么这个数就是快乐数。编写一个算法来判断一个数 `n` 是不是快乐数。
+
+思路：使用“快慢指针”思想找出循环，判断循环点是否为 1。
+
+复杂度分析：
+
+-   时间复杂度：$O(\log n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    bool isHappy(int n) {
+        int slow = n, fast = n;
+        do {
+            slow = bitSqrSum(slow);
+            fast = bitSqrSum(bitSqrSum(fast));
+        } while (slow != fast);
+        return slow == 1;
+    }
+    int bitSqrSum(int n) {
+        int ans = 0;
+        while (n > 0) {
+            ans += pow(n % 10, 2);
+            n /= 10;
+        }
+        return ans;
     }
 };
 ```
