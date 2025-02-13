@@ -849,6 +849,43 @@ public:
 };
 ```
 
+### 环形子数组的最大和
+
+[918. 环形子数组的最大和（中等）](https://leetcode.cn/problems/maximum-sum-circular-subarray/)
+
+问题：给定一个长度为 `n` 的**环形整数数组** `nums` ，返回`nums` 的非空 **子数组** 的最大可能和。
+
+思路：考虑两种情况：
+
+1. 子数组没有越过环形边界，此时只需计算最大子数组和`max_s`；
+2. 子数组越过了环形边界，此时子数组在数组的两边，中间的子数组和越小，两边的和就越大，等价于`sum - min_s`。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int maxSubarraySumCircular(vector<int>& nums) {
+        int max_s = INT_MIN, max_f = INT_MIN, min_s = INT_MAX, min_f = INT_MAX,
+            sum = 0;
+        for (auto& num : nums) {
+            max_f = max(max_f, 0) + num;
+            max_s = max(max_s, max_f);
+            min_f = min(min_f, 0) + num;
+            min_s = min(min_s, min_f);
+            sum += num;
+        }
+        // 考虑题目不允许空数组的特殊情况
+        return min_s == sum ? max_s : max(max_s, sum - min_s);
+    }
+};
+```
+
 ### 合并区间
 
 [56. 合并区间（中等）](https://leetcode.cn/problems/merge-intervals/)
@@ -1278,6 +1315,50 @@ public:
             p.next = tmp;
         }
         return p.next;
+    }
+};
+```
+
+### 旋转链表
+
+[61. 旋转链表（中等）](https://leetcode.cn/problems/rotate-list/)
+
+问题：给你一个链表的头节点 `head` ，旋转链表，将链表每个节点向右移动 `k` 个位置。
+
+思路：先将给定的链表连接成环，然后将指定位置断开。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    ListNode* rotateRight(ListNode* head, int k) {
+        if (k == 0 || head == nullptr || head->next == nullptr) {
+            return head;
+        }
+        ListNode *p = head;
+        int length = 1;
+        while (p->next) {
+            ++length;
+            p = p->next;
+        }
+        int step = length - k % length;
+        if (step == length) {
+            return head;
+        }
+        p->next = head;
+        for (int i = 1; i < step; ++i) {
+            head = head->next;
+        }
+        ListNode* pre = head;
+        head = head->next;
+        pre->next = nullptr;
+        return head;
     }
 };
 ```
@@ -2131,6 +2212,62 @@ public:
 };
 ```
 
+### 完全二叉树的节点个数
+
+[222. 完全二叉树的节点个数（简单）](https://leetcode.cn/problems/count-complete-tree-nodes/)
+
+问题：给你一棵完全二叉树的根节点 `root` ，求出该树的节点个数。
+
+思路：二分查找 + 位运算。对于最大层数为 h 的完全二叉树，节点个数一定在 $[2^h,2^(h+1)−1]$ 的范围内，可以在该范围内通过二分查找的方式得到完全二叉树的节点个数。如何判断第 k 个节点是否存在呢？如果第 k 个节点位于第 h 层，则 k 的二进制表示包含 h+1 位，其中最高位是 1，其余各位从高到低表示从根节点到第 k 个节点的路径，0 表示移动到左子节点，1 表示移动到右子节点。通过位运算得到第 k 个节点对应的路径，判断该路径对应的节点是否存在，即可判断第 k 个节点是否存在。
+
+复杂度分析：
+
+-   时间复杂度：$O(\logn^2)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int countNodes(TreeNode* root) {
+        if (root == nullptr) {
+            return 0;
+        }
+        int level = 0;
+        TreeNode* node = root;
+        while (node->left != nullptr) {
+            level++;
+            node = node->left;
+        }
+        int low = 1 << level, high = (1 << (level + 1)) - 1;
+        while (low < high) {
+            int mid = (high - low + 1) / 2 + low;
+            if (exists(root, level, mid)) {
+                low = mid;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return low;
+    }
+
+    bool exists(TreeNode* root, int level, int k) {
+        int bits = 1 << (level - 1);
+        TreeNode* node = root;
+        while (node != nullptr && bits > 0) {
+            if (!(bits & k)) {
+                node = node->left;
+            } else {
+                node = node->right;
+            }
+            bits >>= 1;
+        }
+        return node != nullptr;
+    }
+};
+```
+
 ### 翻转二叉树
 
 [226. 翻转二叉树（简单）](https://leetcode.cn/problems/invert-binary-tree/)
@@ -2188,6 +2325,49 @@ public:
 
     bool isSymmetric(TreeNode* root) {
         return check(root, root);
+    }
+};
+```
+
+### 填充每个节点的下一个右侧节点指针 II
+
+[117. 填充每个节点的下一个右侧节点指针 II（中等）](https://leetcode.cn/problems/populating-next-right-pointers-in-each-node-ii/)
+
+问题：给定一个二叉树，填充它的每个 next 指针，让这个指针指向其下一个右侧节点。如果找不到下一个右侧节点，则将 next 指针设置为 `NULL` 。
+
+思路：考虑使用队列进行层序遍历的方法。一旦在某层的节点之间建立了 next 指针，那这层节点实际上形成了一个链表。因此，如果先去建立某一层的 next 指针，再去遍历这一层，就无需再使用队列了。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    Node* connect(Node* root) {
+        if (!root) {
+            return nullptr;
+        }
+        Node *head = root, *dummy = new Node(), *cur;
+        while (head) {
+            dummy->next = nullptr, cur = dummy;
+            for (Node* p = head; p; p = p->next) {
+                if (p->left) {
+                    cur->next = p->left;
+                    cur = cur->next;
+                }
+                if (p->right) {
+                    cur->next = p->right;
+                    cur = cur->next;
+                }
+            }
+            head = dummy->next;
+        }
+        delete (dummy);
+        return root;
     }
 };
 ```
@@ -2556,6 +2736,52 @@ public:
 };
 ```
 
+### 从中序与后序遍历序列构造二叉树
+
+[106. 从中序与后序遍历序列构造二叉树（中等）](https://leetcode.cn/problems/construct-binary-tree-from-inorder-and-postorder-traversal/)
+
+问题：给定两个整数数组 `inorder` 和 `postorder` ，其中 `inorder` 是二叉树的中序遍历， `postorder` 是同一棵树的后序遍历，请你构造并返回这颗二叉树。
+
+思路：根据后序遍历逻辑，递归创建右子树和左子树。建立一个（元素，下标）键值对的哈希表，根据根节点的下标将中序数组分为左子树和右子树两部分。注意这里有需要先创建右子树，再创建左子树的依赖关系。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    TreeNode* buildTree(vector<int>& inorder, vector<int>& postorder) {
+        post_idx = postorder.size() - 1;
+        for (int i = 0; i < inorder.size(); ++i) {
+            idx_map[inorder[i]] = i;
+        }
+        return buildNode(0, post_idx, inorder, postorder);
+    }
+
+private:
+    int post_idx;
+    unordered_map<int, int> idx_map;
+    TreeNode* buildNode(int in_left, int in_right, vector<int>& inorder,
+                        vector<int>& postorder) {
+        if (in_left > in_right) {
+            return nullptr;
+        }
+        int root_val = postorder[post_idx];
+        TreeNode* root = new TreeNode(root_val);
+        int index = idx_map[root_val];
+        --post_idx;
+        // 先创建右子树，再创建左子树
+        root->right = buildNode(index + 1, in_right, inorder, postorder);
+        root->left = buildNode(in_left, index - 1, inorder, postorder);
+        return root;
+    }
+};
+```
+
 ### 路径总和 III
 
 [437. 路径总和 III（中等）](https://leetcode.cn/problems/path-sum-iii/)
@@ -2677,6 +2903,49 @@ private:
 
 ## 图论
 
+拓扑排序：课程表
+
+并查集：除法求值
+
+### 克隆图
+
+[133. 克隆图（中等）](https://leetcode.cn/problems/clone-graph/)
+
+问题：给你无向连通图中一个节点的引用，请你返回该图的深拷贝（克隆）。
+
+思路：深度优先搜索，用哈希表记录所有已被访问和克隆的节点，防止死循环。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+    unordered_map<Node*, Node*> visited;
+
+public:
+    Node* cloneGraph(Node* node) {
+        if (!node) {
+            return nullptr;
+        }
+        if (visited.find(node) != visited.end()) {
+            return visited[node];
+        }
+        // 克隆节点并用哈希表存储
+        Node* cloneNode = new Node(node->val);
+        visited[node] = cloneNode;
+        // 遍历该节点的邻居并更新克隆节点的邻居列表
+        for (Node* neighbor : node->neighbors) {
+            cloneNode->neighbors.emplace_back(cloneGraph(neighbor));
+        }
+        return cloneNode;
+    }
+};
+```
+
 ### 岛屿数量
 
 [200. 岛屿数量（中等）](https://leetcode.cn/problems/number-of-islands)
@@ -2723,6 +2992,81 @@ private:
         dfs(x + 1, y);
         dfs(x, y - 1);
         dfs(x, y + 1);
+    }
+};
+```
+
+### 除法求值
+
+[399. 除法求值（中等）](https://leetcode.cn/problems/evaluate-division/)
+
+问题：给你一个变量对数组 `equations` 和一个实数值数组 `values` 作为已知条件，其中 `equations[i] = [Ai, Bi]` 和 `values[i]` 共同表示等式 `Ai / Bi = values[i]` 。每个 `Ai` 或 `Bi` 是一个表示单个变量的字符串。另有一些以数组 `queries` 表示的问题，其中 `queries[j] = [Cj, Dj]` 表示第 `j` 个问题，请你根据已知条件找出 `Cj / Dj = ?` 的结果作为答案。
+
+思路：带权并查集。
+
+复杂度分析：
+
+-   时间复杂度：$O(n*m)$
+-   空间复杂度：$O(n*m)$
+
+实现：
+
+```cpp
+class Solution {
+    int findf(vector<int>& f, vector<double>& w, int x) {
+        if (f[x] != x) {
+            int father = findf(f, w, f[x]);
+            w[x] = w[x] * w[f[x]];
+            f[x] = father;
+        }
+        return f[x];
+    }
+    void merge(vector<int>& f, vector<double>& w, int x, int y, double val) {
+        int fx = findf(f, w, x);
+        int fy = findf(f, w, y);
+        f[fx] = fy;
+        w[fx] = val * w[y] / w[x];
+    }
+
+public:
+    vector<double> calcEquation(vector<vector<string>>& equations,
+                                vector<double>& values,
+                                vector<vector<string>>& queries) {
+        int nvars = 0;
+        unordered_map<string, int> variables;
+
+        int n = equations.size();
+        for (int i = 0; i < n; ++i) {
+            if (variables.count(equations[i][0])) {
+                variables[equations[i][0]] = nvars++;
+            }
+            if (variables.count(equations[i][1])) {
+                variables[equations[i][1]] = nvars++;
+            }
+        }
+        vector<int> f(nvars);
+        vector<double> w(nvars, 1.0);
+        for (int i = 0; i < nvars; ++i) {
+            f[i] = i;
+        }
+        for (int i = 0; i < n; ++i) {
+            int va = variables[equations[i][0]],
+                vb = variables[equations[i][1]];
+            merge(f, w, va, vb, values[i]);
+        }
+        vector<double> ret;
+        for (const auto& q : queries) {
+            double result = -1.0;
+            if (variables.count(q[0]) && variables.count(q[1])) {
+                int ia = variables[q[0]], ib = variables[q[1]];
+                int fa = findf(f, w, ia), fb = findf(f, w, ib);
+                if (fa == fb) {
+                    result = w[ia] / w[ib];
+                }
+            }
+            ret.push_back(result);
+        }
+        return ret;
     }
 };
 ```
@@ -3715,6 +4059,60 @@ private:
 };
 ```
 
+### 基本计算器
+
+[224. 基本计算器（困难）](https://leetcode.cn/problems/basic-calculator/)
+
+问题：给你一个字符串表达式 `s` ，请你实现一个基本计算器来计算并返回它的值。
+
+思路：括号展开 + 栈。如果展开表达式中所有的括号，则得到的新表达式中，数字本身不会发生变化，只是每个数字前面的符号会发生变化。为此需要维护一个栈，其中栈顶元素记录了当前位置所处的每个括号所「共同形成」的符号。
+
+复杂度分析：
+
+-   时间复杂度：$O(n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int calculate(string s) {
+        stack<int> ops;
+        ops.push(1);
+        int sign = 1;
+        int res = 0;
+        int n = s.size();
+        for (int i = 0; i < n; ++i) {
+            switch (s[i]) {
+            case '+':
+                sign = ops.top();
+                break;
+            case '-':
+                sign = -ops.top();
+                break;
+            case '(':
+                ops.push(sign);
+                break;
+            case ')':
+                ops.pop();
+                break;
+            case ' ':
+                break;
+            default:
+                long num = 0;
+                while (i < n && isdigit(s[i])) {
+                    num = num * 10 + s[i++] - '0';
+                }
+                res += sign * num;
+                --i;
+            }
+        }
+        return res;
+    }
+};
+```
+
 ### 字符串解码
 
 [394. 字符串解码（中等）](https://leetcode.cn/problems/decode-string/)
@@ -3952,6 +4350,43 @@ public:
 };
 ```
 
+### 查找和最小的 K 对数字
+[373. 查找和最小的 K 对数字（中等）](https://leetcode.cn/problems/find-k-pairs-with-smallest-sums/)
+
+问题：给定两个以 **非递减顺序排列** 的整数数组 `nums1` 和 `nums2` , 以及一个整数 `k` 。定义一对值 `(u,v)`，其中第一个元素来自 `nums1`，第二个元素来自 `nums2` 。请找到和最小的 `k` 个数对 `(u1,v1)`, ` (u2,v2)` ...  `(uk,vk)` 。
+
+思路：借助最小堆。
+
+复杂度分析：
+
+-   时间复杂度：$O(k \log min(n, k))$
+-   空间复杂度：$O(min(n, k))$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    vector<vector<int>> kSmallestPairs(vector<int>& nums1, vector<int>& nums2, int k) {
+        int n = nums1.size(), m = nums2.size();
+        vector<vector<int>> ans;
+        priority_queue<tuple<int, int, int>> pq;
+        for (int i = 0; i < min(n, k); i++) { // 至多 k 个
+            pq.emplace(-nums1[i] - nums2[0], i, 0); // 取相反数变成小顶堆
+        }
+        while (ans.size() < k) {
+            auto [_, i, j] = pq.top();
+            pq.pop();
+            ans.push_back({nums1[i], nums2[j]});
+            if (j + 1 < m) {
+                pq.emplace(-nums1[i] - nums2[j + 1], i, j + 1);
+            }
+        }
+        return ans;
+    }
+};
+```
+
 ### 数据流的中位数
 
 [295. 数据流的中位数（困难）](https://leetcode.cn/problems/find-median-from-data-stream/)
@@ -3988,6 +4423,53 @@ public:
     }
     double findMedian() {
         return A.size() != B.size() ? A.top() : (A.top() + B.top()) / 2.0;
+    }
+};
+```
+
+### IPO
+
+[502. IPO（困难）](https://leetcode.cn/problems/ipo/)
+
+问题：给你 `n` 个项目。对于每个项目 `i` ，它都有一个纯利润 `profits[i]` ，和启动该项目需要的最小资本 `capital[i]` 。从给定项目中选择 **最多** `k` 个不同项目的列表，以 **最大化最终资本** ，并输出最终可获得的最多资本。
+
+思路：利用堆的贪心算法。利用大根堆的特性，将所有能够投资的项目的利润全部压入到堆中，每次从堆中取出最大值，然后更新手中持有的资本，同时将待选的项目利润进入堆，不断重复上述操作。
+
+复杂度分析：
+
+-   时间复杂度：$O((n+k)\log n)$
+-   空间复杂度：$O(n)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int findMaximizedCapital(int k, int w, vector<int>& profits,
+                             vector<int>& capital) {
+        int n = profits.size();
+        priority_queue<int, vector<int>, less<int>> pq;
+        vector<pair<int, int>> arr;
+        for (int i = 0; i < n; ++i) {
+            arr.push_back({capital[i], profits[i]});
+        }
+        sort(arr.begin(), arr.end(),
+             [](const pair<int, int>& a, const pair<int, int>& b) {
+                 return a.first < b.first;
+             });
+        int idx = 0;
+        for (int i = 0; i < k; ++i) {
+            while (idx < n && arr[idx].first <= w) {
+                pq.push(arr[idx++].second);
+            }
+            if (!pq.empty()) {
+                w += pq.top();
+                pq.pop();
+            } else {
+                break;
+            }
+        }
+        return w;
     }
 };
 ```
@@ -4908,6 +5390,34 @@ public:
             }
         }
         return ans;
+    }
+};
+```
+
+### 数字范围按位与
+
+[201. 数字范围按位与（中等）](https://leetcode.cn/problems/bitwise-and-of-numbers-range/)
+
+问题：给你两个整数 `left` 和 `right` ，表示区间 `[left, right]` ，返回此区间内所有数字按位与的结果（包含 `left` 、`right` 端点）。
+
+思路：可以将问题重新表述为：给定两个整数，我们要找到它们对应的二进制字符串的公共前缀。有一个位移相关的算法叫做「Brian Kernighan 算法」，它用于清除二进制串中最右边的 1，可以用它来计算两个二进制字符串的公共前缀。
+
+复杂度分析：
+
+-   时间复杂度：$O(log n)$
+-   空间复杂度：$O(1)$
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int rangeBitwiseAnd(int m, int n) {
+        while (m < n) {
+            // 抹去最右边的 1
+            n = n & (n - 1);
+        }
+        return n;
     }
 };
 ```
