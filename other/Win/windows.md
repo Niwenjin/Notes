@@ -123,3 +123,11 @@ C:\\Users\\13199\\AppData\\Local\\Programs\\oh-my-posh\\bin\\oh-my-posh.exe init
 ```
 
 其中，主题文件位置在`C:\Users\13199\AppData\Local\Programs\oh-my-posh\themes`中，可以在官方文档中预览。
+
+了解计算机上的现用执行策略，更改执行策略，以管理员身份打开 PowerShell 输入：
+
+```cmd
+>> get-executionpolicy
+Restricted
+>> set-executionpolicy remotesigned
+```
