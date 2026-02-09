@@ -30,6 +30,10 @@
 
 [Transformers](AI/Transformers/transformers.md)
 
+[mongo](tools/mongo/mongodb.md)
+
+[text-embedding](AI/text-embedding.md)
+
 ## 读书笔记
 
 [C++ Primer](cpp/C++Primer/C++Primer.md)
