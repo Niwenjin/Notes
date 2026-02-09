@@ -655,21 +655,29 @@ class Solution {
 public:
     int strStr(string haystack, string needle) {
         int n = haystack.size(), m = needle.size();
+        if (m == 0) {
+            return 0;
+        }
         vector<int> next(m);
         for (int i = 1, j = 0; i < m; ++i) {
-            while (j > 0 && needle[i] != needle[j])
+            while (j > 0 && needle[i] != needle[j]) {
                 j = next[j - 1];
-            if (needle[i] == needle[j])
+            }
+            if (needle[i] == needle[j]) {
                 ++j;
+            }
             next[i] = j;
         }
         for (int i = 0, j = 0; i < n; ++i) {
-            while (j > 0 && haystack[i] != needle[j])
+            while (j > 0 && haystack[i] != needle[j]) {
                 j = next[j - 1];
-            if (haystack[i] == needle[j])
+            }
+            if (haystack[i] == needle[j]) {
                 ++j;
-            if (j == m)
-                return i - m + 1;
+            }
+            if (j == m) {
+                return i - j + 1;
+            }
         }
         return -1;
     }
@@ -1465,7 +1473,7 @@ public:
 -   时间复杂度：$O(n)$
 -   空间复杂度：$O(1)$
 
-实现：
+实现（背诵）：
 
 ```cpp
 class Solution {
@@ -5265,6 +5273,47 @@ public:
             }
         }
         return dp[m][n];
+    }
+};
+```
+
+### 买卖股票的最佳时机 IV
+
+[188. 买卖股票的最佳时机 IV（困难）](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iv/)
+
+问题：给你一个整数数组 `prices` 和一个整数 `k` ，其中 `prices[i]` 是某支给定的股票在第 `i` 天的价格。设计一个算法来计算你所能获取的最大利润。你最多可以完成 `k` 笔交易。也就是说，你最多可以买 `k` 次，卖 `k` 次。
+
+思路：[基础算法精讲 21](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1ho4y1W7QK%2F)。状态 `dp[i][j][k]` 表示第 i 天第 j 次交易，k 为 0 或 1 表示是否持有股票，有状态转移方程：
+$$
+dp[i+1][j][0]=max(dp[i][j][0], dp[i][j][1]+prices[i]), \\
+dp[i+1][j][1]=max(dp[i][j][1], dp[i][j-1][0]-prices[i])
+$$
+优化：用两个滚动数组优化空间复杂度。
+
+复杂度分析：
+
+-   时间复杂度：$O(nk)$
+-   空间复杂度：$O(k)$ 
+
+实现：
+
+```cpp
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+        // 为了防止j-1<0的情况，j维度额外添加1个长度，此时交易k次存储在dp[k+1]中，需要k+2长度的数组
+        vector<array<int, 2>> dp(k + 2, {INT_MIN / 2, INT_MIN / 2});
+        for (int j = 1; j <= k + 1; ++j) {
+            dp[j][0] = 0;
+        }
+        for (int p : prices) {
+            // 由于dp[j][1]会用到dp[j][0]的结果，因此采用倒序遍历
+            for (int j = k + 1; j > 0; --j) {
+                dp[j][0] = max(dp[j][0], dp[j][1] + p);
+                dp[j][1] = max(dp[j][1], dp[j - 1][0] - p);
+            }
+        }
+        return dp[k + 1][0];
     }
 };
 ```
