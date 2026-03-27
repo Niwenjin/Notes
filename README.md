@@ -8,6 +8,8 @@
 
 [Linux C++开发](cpp/linuxcpp/linuxc++.md)
 
+[Git](tools/git/git.md)
+
 [B+树](tasks/BPlusTree/b+tree.md)
 
 [中继服务器](tasks/TcpRelay/tcprelay.md)
@@ -77,12 +79,12 @@
 分布式存储
 
 > [The Google File System](paper/GFS/gfs.md)
-> 
+>
 > Ceph
 >
-> -   [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)
-> -   [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
-> -   [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
+> - [Ceph: A Scalable, High-Performance Distributed File System](paper/Ceph/Ceph.md)
+> - [CRUSH: Controlled, Scalable, Decentralized Placement of Replicated Data](paper/Ceph/CRUSH.md)
+> - [RADOS: A Scalable, Reliable Storage Service for Petabyte-scaleStorage Clusters](paper/Ceph/RADOS.md)
 
 [目标检测](paper/Detection/detection.md)
 

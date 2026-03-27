@@ -2,8 +2,7 @@
 
 ## 目录
 
-[shell 命令](#shell-命令)  
-[git 常用命令](#git)  
+[shell 命令](#shell-命令)    
 [GCC](#gcc)  
 [GDB](#gdb)  
 [CMake](#cmake)  
@@ -381,25 +380,6 @@
 -   重定向
     `$ command / FILE` 将输出重定向（追加）到 FILE  
     `$ command < FILE` 将输入重定向到 FILE
-
-## git
-
-### git 常用命令
-
-![git](img/git.jpg)
-
-### github
-
-设置姓名邮箱
-
-```shell
-# 设置全局
-git config --global user.name Niwenjin
-git config --global user.email ni_wenjin@qq.com
-# 仅设置当前仓库
-git config user.name Niwenjin
-git config user.email ni_wenjin@qq.com
-```
 
 ## GCC
 
