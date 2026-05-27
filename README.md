@@ -36,6 +36,8 @@
 
 [text-embedding](AI/text-embedding.md)
 
+[Claude Code](tools/Claude/claude.md)
+
 ## 读书笔记
 
 [C++ Primer](cpp/C++Primer/C++Primer.md)
